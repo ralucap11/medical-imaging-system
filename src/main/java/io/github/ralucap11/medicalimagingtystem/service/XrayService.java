@@ -69,7 +69,7 @@ public class XrayService
         {
             Path target = Paths.get(storagePath).resolve(storedName);
             Files.createDirectories(target.getParent());
-            file.transferTo(target.toFile());
+            file.transferTo(target);
         }
         catch (IOException e)
         {
