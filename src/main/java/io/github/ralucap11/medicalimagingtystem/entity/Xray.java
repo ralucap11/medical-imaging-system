@@ -1,7 +1,12 @@
 package io.github.ralucap11.medicalimagingtystem.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "xrays")
@@ -20,6 +25,16 @@ public class Xray
 
     @Column(name = "file_name", nullable = false)
     private String fileName;
+
+    @Column(name = "xray_name", nullable = false)
+    private String xrayName;
+
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "date_uploaded", nullable = false)
+    private LocalDate dateUploaded;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="patient_id", nullable = false)

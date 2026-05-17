@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,7 +36,19 @@ public class XrayService
         this.xrayRepository = xrayRepository;
     }
 
+    public List<XrayResponseDTO> getPatientXrays(Long patientId)
+    {
 
+        if (!patientRepository.existsById(patientId))
+        {
+            throw new ResourceNotFoundException("patient not found");
+        }
+
+        return xrayRepository.findByPatientId(patientId)
+                .stream()
+                .map(this::entityToDTO)
+                .toList();
+    }
 
     public List<XrayResponseDTO> getAllXrays()
     {
@@ -46,7 +59,7 @@ public class XrayService
     }
 
     @Transactional
-    public XrayResponseDTO uploadXray(Long patientId, MultipartFile file)
+    public XrayResponseDTO uploadXray(Long patientId, MultipartFile file, String xrayName, String description)
     {
         if (file == null || file.isEmpty())
         {
@@ -80,10 +93,20 @@ public class XrayService
         xray.setFileName(storedName);
         xray.setFormat(file.getContentType());
         xray.setPatient(patient);
+        xray.setXrayName(original != null ? original : storedName);
+        xray.setDateUploaded(LocalDate.now());
+        xray.setDescription(description);
 
         return entityToDTO(xrayRepository.save(xray));
     }
 
+    public XrayResponseDTO getXrayById(Long id)
+    {
+        Xray xray = xrayRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("xray not found"));
+
+        return entityToDTO(xray);
+    }
     @Transactional
     public void deleteXray(Long id) throws IOException
     {
@@ -109,6 +132,9 @@ public class XrayService
         XrayResponseDTO response = new XrayResponseDTO();
         response.setId(xray.getId());
         response.setFormat(xray.getFormat());
+        response.setXrayName(xray.getXrayName());
+        response.setDescription(xray.getDescription());
+        response.setDateUploaded(xray.getDateUploaded());
         response.setFileName(xray.getFileName());
 
         Patient patient = xray.getPatient();

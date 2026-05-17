@@ -28,24 +28,56 @@ public class XrayController
         return ResponseEntity.ok(xrayService.getAllXrays());
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<XrayResponseDTO> uploadXray(
-            @RequestParam Long patientId,
-            @RequestParam("file") MultipartFile file)
+
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<XrayResponseDTO>> getPatientXrays(@PathVariable Long patientId)
     {
         try
         {
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(xrayService.uploadXray(patientId, file));
+            return ResponseEntity.ok(xrayService.getPatientXrays(patientId));
         }
         catch (ResourceNotFoundException e)
         {
             return ResponseEntity.notFound().build();
         }
-        catch (IllegalArgumentException e)
+        catch (Exception e)
         {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<XrayResponseDTO> getXrayById(@PathVariable Long id)
+    {
+        try
+        {
+            return ResponseEntity.ok(xrayService.getXrayById(id));
+        }
+        catch (ResourceNotFoundException e)
+        {
+            return ResponseEntity.notFound().build();
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<XrayResponseDTO> uploadXray(
+            @RequestParam Long patientId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) String xrayName,
+            @RequestParam(required = false) String description
+    )
+    {
+        try
+        {
+            return ResponseEntity.ok(xrayService.uploadXray(patientId, file, xrayName, description));
+        }
+        catch (ResourceNotFoundException e)
+        {
+            return ResponseEntity.notFound().build();
         }
         catch (Exception e)
         {
