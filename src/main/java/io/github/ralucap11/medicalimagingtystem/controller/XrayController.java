@@ -3,9 +3,10 @@ package io.github.ralucap11.medicalimagingtystem.controller;
 import io.github.ralucap11.medicalimagingtystem.dto.XrayResponseDTO;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundException;
 import io.github.ralucap11.medicalimagingtystem.service.XrayService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/xray")
+@EnableMethodSecurity
 public class XrayController
 {
     private final XrayService xrayService;
@@ -64,6 +66,7 @@ public class XrayController
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<XrayResponseDTO> uploadXray(
             @RequestParam Long patientId,
             @RequestParam("file") MultipartFile file,
@@ -86,6 +89,7 @@ public class XrayController
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Void> deleteXray(@PathVariable Long id)
     {
         try

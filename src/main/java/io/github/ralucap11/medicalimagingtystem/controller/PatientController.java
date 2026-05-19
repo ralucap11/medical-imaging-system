@@ -8,6 +8,8 @@ import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundExcept
 import io.github.ralucap11.medicalimagingtystem.service.PatientService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/patient")
+@EnableMethodSecurity
 public class PatientController
 {
     private final PatientService patientService;
@@ -48,6 +51,7 @@ public class PatientController
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<PatientResponseDTO> createPatient(@RequestBody PatientRequestDTO request)
     {
         try
@@ -64,6 +68,7 @@ public class PatientController
         }
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<PatientResponseDTO> updatePatient(@PathVariable Long id, @RequestBody PatientRequestDTO request)
     {
         try
@@ -85,6 +90,7 @@ public class PatientController
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deletePatient(@PathVariable Long id)
     {
         try

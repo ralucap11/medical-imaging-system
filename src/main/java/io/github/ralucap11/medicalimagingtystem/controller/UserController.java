@@ -7,12 +7,15 @@ import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundExcept
 import io.github.ralucap11.medicalimagingtystem.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
+@EnableMethodSecurity
 public class UserController
 {
     private final UserService userService;
@@ -46,6 +49,7 @@ public class UserController
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserResponseDTO> createUser(@RequestBody UserRequestDTO request)
     {
         try
@@ -63,6 +67,7 @@ public class UserController
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @RequestBody UserRequestDTO request)
     {
         try
@@ -79,6 +84,7 @@ public class UserController
         }
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id)
     {
         try
@@ -95,7 +101,5 @@ public class UserController
             return ResponseEntity.internalServerError().build();
         }
     }
-
-
 
 }
