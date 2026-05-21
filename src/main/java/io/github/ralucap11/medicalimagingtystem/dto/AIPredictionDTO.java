@@ -7,7 +7,8 @@ import java.util.Map;
 @Data
 public class AIPredictionDTO
 {
-    private String predClass;
-    private double confidence;
+    private String predictedClass;
+    private Integer predictedIndex;
+    private Double confidence;
     private Map<String, Double> probabilities;
 }
