@@ -33,6 +33,5 @@ import org.springframework.context.annotation.Configuration;
 )
 
 public class OpenApiConfig {
-    //  the annotations handle the configuration.
 }
 

@@ -31,12 +31,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> authenticate(@RequestBody AuthRequestDTO request) {
-        // This will verify the password using the configured PasswordEncoder
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        // If execution reaches here, authentication passed
         final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
         final String jwt = jwtService.generateToken(userDetails);
 

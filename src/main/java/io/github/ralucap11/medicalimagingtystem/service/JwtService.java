@@ -1,5 +1,7 @@
 package io.github.ralucap11.medicalimagingtystem.service;
 
+import io.github.ralucap11.medicalimagingtystem.entity.User;
+import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -26,11 +28,22 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expirationTime; // 24 hours
 
+    private final UserRepository userRepository;
+
+    public JwtService(UserRepository userRepository)
+    {
+        this.userRepository = userRepository;
+    }
+
     public String generateToken(UserDetails userDetails)
     {
         Map<String, Object> claims = new HashMap<>();
 
         claims.put("email", userDetails.getUsername());
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        claims.put("firstName", user.getFirstName());
+        claims.put("lastName", user.getLastName());
 
         String role = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
