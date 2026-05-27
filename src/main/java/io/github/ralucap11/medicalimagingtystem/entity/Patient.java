@@ -16,7 +16,7 @@ public class Patient
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    protected Long id;
 
     @Column(name = "cnp", nullable = false, unique = true)
     private String cnp;
@@ -41,5 +41,20 @@ public class Patient
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     private List<Xray> xrays = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "patients")
+    private List<Doctor> doctors = new ArrayList<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Patient other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 
 }

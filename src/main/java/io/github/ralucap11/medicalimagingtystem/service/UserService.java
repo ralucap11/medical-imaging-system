@@ -6,6 +6,7 @@ import io.github.ralucap11.medicalimagingtystem.entity.User;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceAlreadyExists;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundException;
 import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -13,10 +14,12 @@ import java.util.List;
 public class UserService
 {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository)
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder)
     {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
 

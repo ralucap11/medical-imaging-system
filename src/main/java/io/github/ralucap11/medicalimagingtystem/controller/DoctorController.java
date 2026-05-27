@@ -2,6 +2,8 @@ package io.github.ralucap11.medicalimagingtystem.controller;
 
 import io.github.ralucap11.medicalimagingtystem.dto.DoctorRequestDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.DoctorResponseDTO;
+import io.github.ralucap11.medicalimagingtystem.dto.PatientResponseDTO;
+import io.github.ralucap11.medicalimagingtystem.dto.PatientSummaryDTO;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceAlreadyExists;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundException;
 import io.github.ralucap11.medicalimagingtystem.service.DoctorService;
@@ -9,13 +11,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/doctor")
-@EnableMethodSecurity
+
 public class DoctorController
 {
     private final DoctorService doctorService;
@@ -102,6 +107,56 @@ public class DoctorController
         {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<DoctorResponseDTO> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(doctorService.getByEmail(userDetails.getUsername()));
+    }
+
+    @PostMapping("/{doctorId}/patients/{patientId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    public ResponseEntity<DoctorResponseDTO> assignPatient(
+            @PathVariable Long doctorId,
+            @PathVariable Long patientId)
+    {
+        try
+        {
+            return ResponseEntity.ok(doctorService.assignPatient(doctorId, patientId));
+        }
+        catch (ResourceNotFoundException e)
+        {
+            return ResponseEntity.notFound().build();
+        }
+        catch (ResourceAlreadyExists e)
+        {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409
+        }
+    }
+
+    @DeleteMapping("/{doctorId}/patients/{patientId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    public ResponseEntity<DoctorResponseDTO> unassignPatient(
+            @PathVariable Long doctorId,
+            @PathVariable Long patientId)
+    {
+        try
+        {
+            return ResponseEntity.ok(doctorService.unassignPatient(doctorId, patientId));
+        }
+        catch (ResourceNotFoundException e)
+        {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Listează pacienții unui doctor
+    @GetMapping("/{doctorId}/patients")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    public ResponseEntity<List<PatientSummaryDTO>> getPatients(
+            @PathVariable Long doctorId)
+    {
+        return ResponseEntity.ok(doctorService.getPatientsForDoctor(doctorId));
     }
 
 }

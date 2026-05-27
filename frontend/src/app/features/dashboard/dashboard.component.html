@@ -1,0 +1,137 @@
+<div class="dashboard-wrapper">
+  <div class="dashboard-card">
+    <div class="header">
+      <h2>Bun venit, {{ fullName }}!</h2>
+      <p class="email">{{ email }}</p>
+      <span class="role-badge" [class]="'role-' + role?.toLowerCase()">
+        {{ role }}
+      </span>
+    </div>
+
+    @if (patientInfo$ | async; as patientInfo) {
+    <div class="info-section">
+      <h3>Datele mele medicale</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">CNP</span>
+          <span class="value">{{ patientInfo.cnp }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Vârstă</span>
+          <span class="value">{{ patientInfo.age }} ani</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Gen</span>
+          <span class="value">{{ patientInfo.gender }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Înălțime</span>
+          <span class="value">{{ patientInfo.height }} cm</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Greutate</span>
+          <span class="value">{{ patientInfo.weight }} kg</span>
+        </div>
+      </div>
+    </div>
+    <div class="info-section">
+      <h3>Radiografii</h3>
+      <app-xray-upload [patientId]="patientInfo.id!"></app-xray-upload>
+    </div>
+    }
+
+    @if (doctorInfo$ | async; as doctorInfo) {
+    <div class="info-section">
+      <h3>Profilul meu</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">SPECIALITATE</span>
+          <span class="value">{{ doctorInfo.specialty }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">PACIENȚI ASIGNAȚI</span>
+          <span class="value">{{ (doctorInfo.patients ?? []).length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>Pacienții mei</h3>
+      @if ((doctorInfo.patients ?? []).length > 0) {
+      <table class="patients-table">
+        <thead>
+        <tr>
+          <th>Nume</th>
+          <th>Vârstă</th>
+          <th>Gen</th>
+          <th>Acțiuni</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (patient of (doctorInfo.patients ?? []); track patient.id) {
+        <tr>
+          <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+          <td>{{ patient.age }} ani</td>
+          <td>{{ patient.gender }}</td>
+          <td>
+            <button class="btn-unassign" (click)="unassign(patient.id!)">
+              Elimină
+            </button>
+          </td>
+        </tr>
+        }
+        </tbody>
+      </table>
+      } @else {
+      <p style="color: #888; text-align: center;">
+        Nu ai pacienți asignați momentan.
+      </p>
+      }
+    </div>
+
+    <div class="info-section">
+      <button class="btn-toggle" (click)="showAssignPanel = !showAssignPanel">
+        {{ showAssignPanel ? 'Ascunde lista' : 'Asignează pacient nou' }}
+      </button>
+
+      @if (showAssignPanel) {
+      <table class="patients-table" style="margin-top: 12px;">
+        <thead>
+        <tr>
+          <th>Nume</th>
+          <th>CNP</th>
+          <th>Acțiuni</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (patient of allPatients; track patient.id) {
+        <tr>
+          <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+          <td>{{ patient.cnp }}</td>
+          <td>
+            @if (isAssigned(doctorInfo, patient.id!)) {
+            <span style="color: green;">✓ Asignat</span>
+            } @else {
+            <button class="btn-assign" (click)="assign(patient.id!)">
+              Asignează
+            </button>
+            }
+          </td>
+        </tr>
+        }
+        </tbody>
+      </table>
+      }
+    </div>
+    }
+
+    @if (role === 'ADMIN') {
+    <div class="info-section">
+      <h3>Panou administrare</h3>
+      <p style="color: #666;">Ai acces complet la toate funcționalitățile sistemului.</p>
+    </div>
+    }
+
+    <button class="logout-btn" (click)="logout()">Delogare</button>
+  </div>
+</div>

@@ -1,0 +1,196 @@
+.dashboard-wrapper {
+  min-height: 100vh;
+  background: #f0f4f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.dashboard-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 520px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.6rem;
+    color: #1a1a2e;
+    margin-bottom: 0.3rem;
+  }
+
+  .email {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+  }
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  &.role-patient { background: #e8f4fd; color: #2980b9; }
+  &.role-doctor  { background: #e8f8f0; color: #27ae60; }
+  &.role-admin   { background: #fef0e8; color: #e67e22; }
+}
+
+.info-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin-bottom: 1.2rem;
+    color: #1a1a2e;
+    font-size: 1.1rem;
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  .label {
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+  }
+
+  .value {
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+}
+
+.loading {
+  text-align: center;
+  color: #888;
+  padding: 1rem;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #c0392b;
+  }
+}
+
+.patients-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+
+  th, td {
+    text-align: left;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 1px solid #eee;
+  }
+
+  td {
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  // Coloana Nume — mai lată
+  th:first-child, td:first-child {
+    width: 35%;
+  }
+
+  // Coloana Vârstă / CNP
+  th:nth-child(2), td:nth-child(2) {
+    width: 25%;
+  }
+
+  // Coloana Gen
+  th:nth-child(3), td:nth-child(3) {
+    width: 20%;
+  }
+
+  // Coloana Acțiuni — centrată
+  th:last-child, td:last-child {
+    width: 20%;
+    text-align: center;
+  }
+}
+
+.btn-unassign {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover {
+    background: #e03333;
+  }
+}
+
+.btn-assign {
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover {
+    background: #388e3c;
+  }
+}
+
+.btn-toggle {
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 4px;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}

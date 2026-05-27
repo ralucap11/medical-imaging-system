@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -47,6 +49,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api/patient/me").hasRole("PATIENT")
+                        .requestMatchers("/api/doctor/me").hasRole("DOCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/patient").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/doctor/*/patients/*").hasAnyRole("ADMIN", "DOCTOR")   // ← assign
+                        .requestMatchers(HttpMethod.DELETE, "/api/doctor/*/patients/*").hasAnyRole("ADMIN", "DOCTOR") // ← unassign
                         .requestMatchers("/api/ai/**").hasAnyRole("DOCTOR", "ADMIN")
                         .anyRequest().authenticated()
                 )

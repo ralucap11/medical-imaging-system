@@ -1,8 +1,10 @@
 package io.github.ralucap11.medicalimagingtystem.controller;
 
 
+import io.github.ralucap11.medicalimagingtystem.dto.DoctorResponseDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.PatientRequestDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.PatientResponseDTO;
+import io.github.ralucap11.medicalimagingtystem.entity.Patient;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceAlreadyExists;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundException;
 import io.github.ralucap11.medicalimagingtystem.service.PatientService;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +20,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/patient")
-@EnableMethodSecurity
 public class PatientController
 {
     private final PatientService patientService;
@@ -68,7 +70,7 @@ public class PatientController
         }
     }
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<PatientResponseDTO> updatePatient(@PathVariable Long id, @RequestBody PatientRequestDTO request)
     {
         try
@@ -108,4 +110,16 @@ public class PatientController
         }
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<PatientResponseDTO> getMyInfo(Authentication authentication) {
+        String email = authentication.getName();
+        PatientResponseDTO patient = patientService.findByEmail(email);
+        return ResponseEntity.ok(patient);
+    }
+
+    @GetMapping("/{patientId}/doctors")
+    public ResponseEntity<List<DoctorResponseDTO>> getDoctorsForPatient(@PathVariable Long patientId)
+    {
+        return ResponseEntity.ok(patientService.getDoctorsForPatient(patientId));
+    }
 }

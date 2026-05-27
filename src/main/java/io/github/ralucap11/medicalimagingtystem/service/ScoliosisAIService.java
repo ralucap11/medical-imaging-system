@@ -2,6 +2,7 @@ package io.github.ralucap11.medicalimagingtystem.service;
 
 import io.github.ralucap11.medicalimagingtystem.dto.AIPredictionDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.CobbAngleDTO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,10 +21,11 @@ public class ScoliosisAIService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private final String AI_URL   = "http://localhost:5001";  // ConvNeXt — severitate
-    private final String COBB_URL = "http://localhost:5002";  // YOLOv8   — unghi Cobb
+    @Value("${ai.service.url}")
+    private String AI_URL;  // ConvNeXt — severitate
 
-    // ── Helper reutilizabil pentru multipart ─────────────────
+    @Value("${ai.service.cobb.url}")
+    private String COBB_URL;  // YOLOv8   — unghi Cobb
 
     private ByteArrayResource toResource(MultipartFile file) throws IOException {
         final String filename = file.getOriginalFilename();
@@ -33,7 +35,7 @@ public class ScoliosisAIService {
         };
     }
 
-    // ── 1. Clasificare severitate (port 5001) ────────────────
+
 
     public AIPredictionDTO classify(MultipartFile xrayImage) throws IOException {
         HttpHeaders headers = new HttpHeaders();
@@ -50,7 +52,7 @@ public class ScoliosisAIService {
         return response.getBody();
     }
 
-    // ── 2. Calcul unghi Cobb (port 5002) ─────────────────────
+
 
     /**
      * @param withVisualization  dacă true, răspunsul include câmpul
@@ -76,7 +78,7 @@ public class ScoliosisAIService {
         return response.getBody();
     }
 
-    // ── 3. Health checks ─────────────────────────────────────
+
 
     public boolean isHealthy() {
         return checkHealth(AI_URL + "/health");

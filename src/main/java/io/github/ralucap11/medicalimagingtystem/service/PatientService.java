@@ -1,13 +1,17 @@
 package io.github.ralucap11.medicalimagingtystem.service;
 
+import io.github.ralucap11.medicalimagingtystem.dto.DoctorResponseDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.PatientRequestDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.PatientResponseDTO;
+import io.github.ralucap11.medicalimagingtystem.entity.Doctor;
 import io.github.ralucap11.medicalimagingtystem.entity.Patient;
 import io.github.ralucap11.medicalimagingtystem.entity.User;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceAlreadyExists;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundException;
+import io.github.ralucap11.medicalimagingtystem.repository.DoctorRepository;
 import io.github.ralucap11.medicalimagingtystem.repository.PatientRepository;
 import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +21,15 @@ public class PatientService
 {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
-    public PatientService(UserRepository userRepository, PatientRepository patientRepository)
+    private final PasswordEncoder passwordEncoder;
+    private final DoctorRepository doctorRepository;
+
+    public PatientService(UserRepository userRepository, PatientRepository patientRepository, PasswordEncoder passwordEncoder, DoctorRepository doctorRepository)
     {
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.doctorRepository = doctorRepository;
     }
 
    public PatientResponseDTO getPatientById(Long id)
@@ -33,6 +42,23 @@ public class PatientService
        Patient patient = patientRepository.getReferenceById(id);
 
        return entityToDTO(patient);
+   }
+
+   public PatientResponseDTO findByEmail(String email)
+   {
+       User user = userRepository.findByEmail(email)
+               .orElseThrow(() -> new RuntimeException("user not found"));
+
+       Patient patient = patientRepository.findByUser(user)
+               .orElseThrow(() -> new RuntimeException("patient not found"));
+
+       PatientResponseDTO dto = new PatientResponseDTO();
+       dto.setCnp(patient.getCnp());
+       dto.setWeight(patient.getWeight());
+       dto.setAge(patient.getAge());
+       dto.setGender(patient.getGender());
+       dto.setHeight(patient.getHeight());
+       return dto;
    }
 
    public List<PatientResponseDTO> getAllPatients()
@@ -56,7 +82,7 @@ public class PatientService
 
        User user = new User();
        user.setEmail(request.getEmail());
-       user.setPassword(request.getPassword());
+       user.setPassword(passwordEncoder.encode(request.getPassword()));
        user.setFirstName(request.getFirstName());
        user.setLastName(request.getLastName());
        user.setRole(request.getRole());
@@ -105,7 +131,7 @@ public class PatientService
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
 
         Patient updatedPatient = patientRepository.save(patient);
@@ -146,5 +172,28 @@ public class PatientService
         return response;
    }
 
+
+    public List<DoctorResponseDTO> getDoctorsForPatient(Long patientId)
+    {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("patient not found"));
+
+        return patient.getDoctors()
+                .stream()
+                .map(this::doctorToDTO)
+                .toList();
+    }
+
+    private DoctorResponseDTO doctorToDTO(Doctor doctor)
+    {
+        DoctorResponseDTO dto = new DoctorResponseDTO();
+        dto.setId(doctor.getId());
+        dto.setFirstName(doctor.getUser().getFirstName());
+        dto.setLastName(doctor.getUser().getLastName());
+        dto.setEmail(doctor.getUser().getEmail());
+        dto.setSpecialty(doctor.getSpecialty());
+        dto.setRole(doctor.getUser().getRole());
+        return dto;
+    }
 
 }

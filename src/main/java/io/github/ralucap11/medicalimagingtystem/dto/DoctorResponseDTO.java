@@ -3,6 +3,8 @@ package io.github.ralucap11.medicalimagingtystem.dto;
 import io.github.ralucap11.medicalimagingtystem.entity.Role;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class DoctorResponseDTO
 {
@@ -14,4 +16,6 @@ public class DoctorResponseDTO
     private Role role;
 
     private String specialty;
+
+    private List<PatientSummaryDTO> patients;
 }

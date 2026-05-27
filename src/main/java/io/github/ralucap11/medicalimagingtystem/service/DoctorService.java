@@ -2,11 +2,16 @@ package io.github.ralucap11.medicalimagingtystem.service;
 
 import io.github.ralucap11.medicalimagingtystem.dto.DoctorRequestDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.DoctorResponseDTO;
+import io.github.ralucap11.medicalimagingtystem.dto.PatientSummaryDTO;
 import io.github.ralucap11.medicalimagingtystem.entity.Doctor;
+import io.github.ralucap11.medicalimagingtystem.entity.Patient;
 import io.github.ralucap11.medicalimagingtystem.entity.User;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceAlreadyExists;
 import io.github.ralucap11.medicalimagingtystem.exception.ResourceNotFoundException;
-import io.github.ralucap11.medicalimagingtystem.repository.DoctorRepository;import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
+import io.github.ralucap11.medicalimagingtystem.repository.DoctorRepository;
+import io.github.ralucap11.medicalimagingtystem.repository.PatientRepository;
+import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,12 +21,19 @@ public class DoctorService
 {
     private final UserRepository userRepository;
     private final DoctorRepository doctorRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final PatientRepository patientRepository;
 
-    public DoctorService(UserRepository userRepository, DoctorRepository doctorRepository)
+    public DoctorService(UserRepository userRepository, DoctorRepository doctorRepository,
+                         PatientRepository patientRepository, PasswordEncoder passwordEncoder)
     {
         this.userRepository = userRepository;
         this.doctorRepository = doctorRepository;
+        this.patientRepository = patientRepository;
+        this.passwordEncoder = passwordEncoder;
     }
+
+
 
     public DoctorResponseDTO getDoctorById(Long id)
   {
@@ -52,7 +64,7 @@ public class DoctorService
 
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setRole(request.getRole());
@@ -79,7 +91,7 @@ public class DoctorService
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
 
         Doctor updatedDoctor = doctorRepository.save(doctor);
@@ -96,6 +108,13 @@ public class DoctorService
         doctorRepository.deleteById(id);
     }
 
+    public DoctorResponseDTO getByEmail(String email) {
+        Doctor doctor = doctorRepository.findByUserEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("doctor not found"));
+        return entityToDTO(doctor);
+    }
+
+
     private DoctorResponseDTO entityToDTO(Doctor doctor)
     {
         DoctorResponseDTO response = new DoctorResponseDTO();
@@ -109,7 +128,72 @@ public class DoctorService
         response.setRole(user.getRole());
 
         response.setSpecialty(doctor.getSpecialty());
+        response.setPatients(doctor.getPatients().stream()
+                .map(this::patientToSummaryDTO)
+                .toList()
+        );
 
         return response;
+    }
+
+    public DoctorResponseDTO assignPatient(Long doctorId, Long patientId)
+    {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("doctor not found"));
+
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("patient not found"));
+
+        if (doctor.getPatients().contains(patient))
+        {
+            throw new ResourceAlreadyExists("patient already assigned to this doctor");
+        }
+
+        doctor.getPatients().add(patient);
+        patient.getDoctors().add(doctor);
+
+        Doctor updatedDoctor = doctorRepository.save(doctor);
+        return entityToDTO(updatedDoctor);
+    }
+
+    // Elimină pacient de la doctor
+    public DoctorResponseDTO unassignPatient(Long doctorId, Long patientId)
+    {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("doctor not found"));
+
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("patient not found"));
+
+        doctor.getPatients().remove(patient);
+        patient.getDoctors().remove(doctor);
+
+        Doctor updatedDoctor = doctorRepository.save(doctor);
+        return entityToDTO(updatedDoctor);
+    }
+
+    // Returnează toți pacienții unui doctor
+    public List<PatientSummaryDTO> getPatientsForDoctor(Long doctorId)
+    {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResourceNotFoundException("doctor not found"));
+
+        return doctor.getPatients()
+                .stream()
+                .map(this::patientToSummaryDTO)
+                .toList();
+    }
+
+    private PatientSummaryDTO patientToSummaryDTO(Patient patient)
+    {
+        PatientSummaryDTO dto = new PatientSummaryDTO();
+        dto.setId(patient.getId());
+        dto.setFirstName(patient.getUser().getFirstName());
+        dto.setLastName(patient.getUser().getLastName());
+        dto.setEmail(patient.getUser().getEmail());
+        dto.setCnp(patient.getCnp());
+        dto.setAge(patient.getAge());
+        dto.setGender(String.valueOf(patient.getGender()));
+        return dto;
     }
 }
