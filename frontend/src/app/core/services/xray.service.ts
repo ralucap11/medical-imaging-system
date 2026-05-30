@@ -5,10 +5,17 @@ import { Observable } from 'rxjs';
 export interface XrayResponse {
   id: number;
   fileName: string;
+  xrayName: string;
   format: string;
+  description: string | null;
+  dateUploaded: string;
   patientId: number;
   patientFirstName: string;
   patientLastName: string;
+  aiClassification: string | null;
+  aiConfidence: number | null;
+  cobbAngle: number | null;
+  cobbVisualization: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +43,13 @@ export class XrayService {
   getXraysForPatient(patientId: number): Observable<XrayResponse[]> {
     return this.http.get<XrayResponse[]>(
       `${this.baseUrl}/patient/${patientId}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  deleteXray(xrayId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/${xrayId}`,
       { headers: this.getHeaders() }
     );
   }

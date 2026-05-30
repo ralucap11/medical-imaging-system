@@ -51,10 +51,12 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/patient/me").hasRole("PATIENT")
                         .requestMatchers("/api/doctor/me").hasRole("DOCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/patient").hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(HttpMethod.POST, "/api/doctor/*/patients/*").hasAnyRole("ADMIN", "DOCTOR")   // ← assign
-                        .requestMatchers(HttpMethod.DELETE, "/api/doctor/*/patients/*").hasAnyRole("ADMIN", "DOCTOR") // ← unassign
+                        .requestMatchers(HttpMethod.GET, "/api/patient/*").hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/patient").hasAnyRole("ADMIN", "DOCTOR","PATIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/doctor/*/patients/*").hasAnyRole("ADMIN", "DOCTOR")   //assign
+                        .requestMatchers(HttpMethod.DELETE, "/api/doctor/*/patients/*").hasAnyRole("ADMIN", "DOCTOR") //unassign
                         .requestMatchers("/api/ai/**").hasAnyRole("DOCTOR", "ADMIN")
+                        .requestMatchers("/api/diagnosis/**").hasAnyRole("ADMIN", "DOCTOR", "PATIENT")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

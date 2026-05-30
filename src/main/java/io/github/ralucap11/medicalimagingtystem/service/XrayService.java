@@ -1,5 +1,7 @@
 package io.github.ralucap11.medicalimagingtystem.service;
 
+import io.github.ralucap11.medicalimagingtystem.dto.AIPredictionDTO;
+import io.github.ralucap11.medicalimagingtystem.dto.CobbAngleDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.XrayResponseDTO;
 import io.github.ralucap11.medicalimagingtystem.entity.Patient;
 import io.github.ralucap11.medicalimagingtystem.entity.Xray;
@@ -26,14 +28,16 @@ public class XrayService
 {
     private final PatientRepository patientRepository;
     private final XrayRepository xrayRepository;
+    private final ScoliosisAIService scoliosisAIService;
 
     @Value("${xray.storage.path}")
     private String storagePath;
 
-    public XrayService(PatientRepository patientRepository, XrayRepository xrayRepository)
+    public XrayService(PatientRepository patientRepository, XrayRepository xrayRepository, ScoliosisAIService scoliosisAIService)
     {
         this.patientRepository = patientRepository;
         this.xrayRepository = xrayRepository;
+        this.scoliosisAIService = scoliosisAIService;
     }
 
     public List<XrayResponseDTO> getPatientXrays(Long patientId)
@@ -59,10 +63,9 @@ public class XrayService
     }
 
     @Transactional
-    public XrayResponseDTO uploadXray(Long patientId, MultipartFile file, String xrayName, String description)
-    {
-        if (file == null || file.isEmpty())
-        {
+    public XrayResponseDTO uploadXray(Long patientId, MultipartFile file,
+                                      String xrayName, String description) {
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("file is empty");
         }
 
@@ -71,21 +74,17 @@ public class XrayService
 
         String original = file.getOriginalFilename();
         String extension = "";
-        if (original != null && original.contains("."))
-        {
+        if (original != null && original.contains(".")) {
             extension = original.substring(original.lastIndexOf('.'));
         }
 
         String storedName = UUID.randomUUID() + extension;
 
-        try
-        {
+        try {
             Path target = Paths.get(storagePath).resolve(storedName);
             Files.createDirectories(target.getParent());
             file.transferTo(target);
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException("could not store file", e);
         }
 
@@ -97,9 +96,31 @@ public class XrayService
         xray.setDateUploaded(LocalDate.now());
         xray.setDescription(description);
 
+        patient.getXrays().add(xray);
+
+        // ← Apelează AI clasificare severitate
+        try {
+            AIPredictionDTO prediction = scoliosisAIService.classify(file);
+            if (prediction != null) {
+                xray.setAiClassification(prediction.getPredictedClass());
+                xray.setAiConfidence(prediction.getConfidence());
+            }
+        } catch (Exception e) {
+            // AI indisponibil — continuăm fără clasificare
+        }
+
+        try {
+            CobbAngleDTO cobb = scoliosisAIService.calculateCobb(file, true);
+            if (cobb != null) {
+                xray.setCobbAngle(cobb.getCobbAngle());
+                xray.setCobbVisualization(cobb.getVisualization());
+            }
+        } catch (Exception e) {
+            // AI Cobb indisponibil — continuăm fără unghi
+        }
+
         return entityToDTO(xrayRepository.save(xray));
     }
-
     public XrayResponseDTO getXrayById(Long id)
     {
         Xray xray = xrayRepository.findById(id)
@@ -142,8 +163,15 @@ public class XrayService
         response.setPatientFirstName(patient.getUser().getFirstName());
         response.setPatientLastName(patient.getUser().getLastName());
 
-        return response;
+        response.setAiClassification(xray.getAiClassification());
+        response.setCobbAngle(xray.getCobbAngle());
+        response.setCobbVisualization(xray.getCobbVisualization());
 
+        response.setPatientId(patient.getId());
+        response.setPatientFirstName(patient.getUser().getFirstName());
+        response.setPatientLastName(patient.getUser().getLastName());
+
+        return response;
     }
 
 }

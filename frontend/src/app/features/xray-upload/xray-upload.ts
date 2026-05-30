@@ -1,46 +1,50 @@
-import { Component, Input } from '@angular/core';
+import {Component, EventEmitter, Input, Output, signal} from '@angular/core';
 import { XrayService, XrayResponse } from '../../core/services/xray.service';
+import {finalize} from 'rxjs';
+import {CommonModule} from '@angular/common';
 
 @Component({
   selector: 'app-xray-upload',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './xray-upload.html',
   styleUrls: ['./xray-upload.css']
 })
-export class XrayUploadComponent {
+export class XrayUpload {
   @Input() patientId!: number;
+  @Output() uploaded = new EventEmitter<XrayResponse>();
 
-  selectedFile: File | null = null;
-  isUploading = false;
-  uploadResult: XrayResponse | null = null;
-  errorMessage = '';
+  selectedFile = signal<File | null>(null);
+  isUploading = signal(false);
+  uploadResult = signal<XrayResponse | null>(null);
+  errorMessage = signal<string | null>(null);
 
   constructor(private xrayService: XrayService) {}
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
-      this.errorMessage = '';
-      this.uploadResult = null;
-    }
+    this.selectedFile.set(input.files?.[0] || null);
   }
 
   upload(): void {
-    if (!this.selectedFile || !this.patientId) return;
+    const file = this.selectedFile();
+    if (!file) return;
 
-    this.isUploading = true;
-    this.errorMessage = '';
+    this.isUploading.set(true);
+    this.errorMessage.set(null);
 
-    this.xrayService.uploadXray(this.patientId, this.selectedFile).subscribe({
-       next: (result: XrayResponse) => {
-        this.uploadResult = result;
-        this.isUploading = false;
-        this.selectedFile = null;
-      },
-      error: (err: { error?: { message?: string } }) => {
-        this.errorMessage = err.error?.message || 'Eroare la upload. Încearcă din nou.';
-        this.isUploading = false;
-      }
-    });
+    this.xrayService.uploadXray(this.patientId, file)
+      .pipe(finalize(() => {
+        this.isUploading.set(false);
+      }))
+      .subscribe({
+        next: (result) => {
+          this.uploadResult.set(result);
+          this.uploaded.emit(result);
+        },
+        error: (err) => {
+          this.errorMessage.set(err?.error?.error || 'Upload eșuat');
+        }
+      });
   }
 }

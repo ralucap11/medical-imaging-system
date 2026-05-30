@@ -5,7 +5,7 @@ import {Observable} from 'rxjs';
 import {AuthService} from '../../core/services/auth.service';
 import {JwtService} from '../../core/services/jwt.service';
 import {Router} from '@angular/router';
-import {XrayUploadComponent} from '../xray-upload/xray-upload';
+import {XrayUpload} from '../xray-upload/xray-upload';
 import {AsyncPipe, CommonModule} from '@angular/common';
 import { BehaviorSubject, switchMap } from 'rxjs';
 
@@ -14,7 +14,7 @@ import { BehaviorSubject, switchMap } from 'rxjs';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, AsyncPipe, XrayUploadComponent],
+  imports: [CommonModule, AsyncPipe, XrayUpload],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -59,14 +59,14 @@ export class DashboardComponent implements OnInit {
         switchMap(() => this.doctorService.getMyInfo())
       );
 
-      // Ia doctorId și abia apoi încarcă pacienții doctorului
+
       this.doctorService.getMyInfo().subscribe({
         next: (info) => {
           this.currentDoctorId = info.id ?? null;
         }
       });
 
-      // Încarcă toți pacienții disponibili
+
       this.patientService.getAllPatients().subscribe({
         next: (patients) => {
           this.allPatients = patients;
@@ -76,7 +76,7 @@ export class DashboardComponent implements OnInit {
   }
 
   refreshDoctorInfo(): void {
-    this.refreshTrigger$.next(); // ← declanșează re-fetch
+    this.refreshTrigger$.next();
   }
 
   assign(patientId: number): void {
@@ -85,7 +85,7 @@ export class DashboardComponent implements OnInit {
       next: () => this.refreshDoctorInfo(),
       error: (err) => {
         if (err.status === 409) {
-          this.refreshDoctorInfo(); // pacient deja asignat, reîncarcă
+          this.refreshDoctorInfo();
         }
       }
     });
@@ -101,6 +101,11 @@ export class DashboardComponent implements OnInit {
 
   isAssigned(doctorInfo: DoctorInfo, patientId: number): boolean {
     return (doctorInfo.patients ?? []).some(p => p.id === patientId);
+  }
+
+
+  goToPatient(patientId: number): void {
+    this.router.navigate(['/patient', patientId]);
   }
 
   logout(): void {

@@ -69,12 +69,12 @@
         </thead>
         <tbody>
         @for (patient of (doctorInfo.patients ?? []); track patient.id) {
-        <tr>
+        <tr class="clickable-row" (click)="goToPatient(patient.id!)">
           <td>{{ patient.firstName }} {{ patient.lastName }}</td>
           <td>{{ patient.age }} ani</td>
           <td>{{ patient.gender }}</td>
           <td>
-            <button class="btn-unassign" (click)="unassign(patient.id!)">
+            <button class="btn-unassign" (click)="$event.stopPropagation(); unassign(patient.id!)">
               Elimină
             </button>
           </td>

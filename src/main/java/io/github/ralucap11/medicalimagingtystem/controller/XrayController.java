@@ -65,10 +65,10 @@ public class XrayController
         }
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/{patientId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<XrayResponseDTO> uploadXray(
-            @RequestParam Long patientId,
+            @PathVariable Long patientId,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String xrayName,
             @RequestParam(required = false) String description

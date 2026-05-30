@@ -7,31 +7,24 @@
       accept=".jpg,.jpeg,.png,.dcm"
       (change)="onFileSelected($event)"
     />
-    @if (selectedFile) {
-    <span>{{ selectedFile.name }}</span>
-    } @else {
-    <span class="placeholder">Niciun fișier selectat</span>
-    }
   </div>
 
-  <button
-    (click)="upload()"
-    [disabled]="!selectedFile || isUploading"
-  >
-    {{ isUploading ? 'Se încarcă...' : 'Încarcă radiografia' }}
+  <button (click)="upload()" [disabled]="!selectedFile() || isUploading()">
+    {{ isUploading() ? 'Se încarcă...' : 'Încarcă radiografia' }}
   </button>
 
-  @if (uploadResult) {
+  @if (selectedFile()) {
+  <span>{{ selectedFile()!.name }}</span>
+  }
+
+  @if (uploadResult()) {
   <div class="success">
     ✅ Radiografia a fost încărcată cu succes!
-    <br>
-    <small>Fișier: {{ uploadResult.fileName }}</small>
+    <small>Fișier: {{ uploadResult()!.fileName }}</small>
   </div>
   }
 
-  @if (errorMessage) {
-  <div class="error">
-    ❌ {{ errorMessage }}
-  </div>
+  @if (errorMessage()) {
+  <div class="error">❌ {{ errorMessage() }}</div>
   }
 </div>

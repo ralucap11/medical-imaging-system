@@ -29,6 +29,17 @@ public class Xray
     @Column(name = "xray_name", nullable = false)
     private String xrayName;
 
+    @Column(name = "ai_classification")
+    private String aiClassification;
+
+    @Column(name = "cobb_angle")
+    private Double cobbAngle;
+
+    @Column(name = "ai_confidence")
+    private Double aiConfidence;
+
+    @Column(name = "cobb_visualization", columnDefinition = "TEXT")
+    private String cobbVisualization;
 
     @Column(name = "description")
     private String description;
@@ -39,4 +50,7 @@ public class Xray
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="patient_id", nullable = false)
     private Patient patient;
+
+    @OneToOne(mappedBy = "xray", cascade = CascadeType.ALL)
+    private Diagnosis diagnosis;
 }

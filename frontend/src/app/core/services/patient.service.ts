@@ -18,15 +18,19 @@ export interface PatientInfo {
 
 @Injectable({ providedIn: 'root' })
 export class PatientService {
-  private apiUrl = 'http://localhost:8080'; // sau URL-ul tău de backend
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
   getMyInfo(): Observable<PatientInfo> {
-    return this.http.get<PatientInfo>(`${environment.apiUrl}/patient/me`);
+    return this.http.get<PatientInfo>(`${this.apiUrl}/patient/me`);
   }
 
   getAllPatients(): Observable<PatientInfo[]> {
-    return this.http.get<PatientInfo[]>(`${this.apiUrl}/api/patient`);
+    return this.http.get<PatientInfo[]>(`${this.apiUrl}/patient`);
+  }
+
+  getPatientById(id: number): Observable<PatientInfo> {
+    return this.http.get<PatientInfo>(`${this.apiUrl}/patient/${id}`);
   }
 }

@@ -18,4 +18,9 @@ public class XrayResponseDTO
     private Long patientId;
     private String patientFirstName;
     private String patientLastName;
+
+    private String aiClassification;
+    private Double aiConfidence;
+    private Double cobbAngle;
+    private String cobbVisualization;
 }

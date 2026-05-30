@@ -1,5 +1,5 @@
-import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import {authGuard} from './core/guards/auth.guard';
+import {Routes} from '@angular/router';
 
 export const routes: Routes = [
   {
@@ -30,6 +30,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dashboard/dashboard.component')
         .then(m => m.DashboardComponent)
+  },
+  {
+    path: 'patient/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/patient-detail/patient-detail')
+        .then(m => m.PatientDetail)
   },
   {
     path: '**',
