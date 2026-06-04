@@ -20,7 +20,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# ── Config ──────────────────────────────────────────────────
+
 ONNX_PATH   = "vertebrae_detector.onnx"
 INPUT_SIZE  = 640
 CONF_THRESH = 0.25
@@ -33,7 +33,7 @@ def cobb_to_severity(angle: float) -> str:
     if angle < 40:   return "Moderate"
     return "Severe"
 
-# ── Încărcare model ──────────────────────────────────────────
+
 try:
     session = ort.InferenceSession(
         ONNX_PATH,
@@ -47,13 +47,9 @@ except Exception as e:
     MODEL_OK = False
     print(f"[ERR] YOLOv8 load failed: {e}")
 
-# ── Preprocesare imagine ─────────────────────────────────────
+
 def preprocess_image(img: Image.Image):
-    """
-    Redimensionează cu letterboxing la 640×640 (fără distorsiune).
-    Returnează tensor NCHW float32 + parametrii de scalare pentru
-    a converti coordonatele înapoi la dimensiunile originale.
-    """
+
     orig_w, orig_h = img.size
     scale = min(INPUT_SIZE / orig_w, INPUT_SIZE / orig_h)
     new_w = int(orig_w * scale)
@@ -61,7 +57,7 @@ def preprocess_image(img: Image.Image):
 
     resized = img.resize((new_w, new_h), Image.BILINEAR)
 
-    # Canvas gri (114 = valoarea standard YOLOv8 pentru padding)
+
     canvas = Image.new("RGB", (INPUT_SIZE, INPUT_SIZE), (114, 114, 114))
     pad_x  = (INPUT_SIZE - new_w) // 2
     pad_y  = (INPUT_SIZE - new_h) // 2
@@ -74,7 +70,7 @@ def preprocess_image(img: Image.Image):
             "orig_w": orig_w, "orig_h": orig_h}
     return arr, meta
 
-# ── NMS manual ───────────────────────────────────────────────
+
 def nms(boxes_xywh, scores, iou_thresh):
     """Non-maximum suppression pe boxes [x_c,y_c,w,h]."""
     if len(boxes_xywh) == 0:
@@ -102,31 +98,33 @@ def nms(boxes_xywh, scores, iou_thresh):
 
     return keep
 
-# ── Filtrare outlieri ────────────────────────────────────────
+
 def filter_vertebrae(vertebrae: list) -> list:
-    """Elimină outlieri: detectii prea mari sau cu confidence scăzut."""
     if len(vertebrae) < 3:
-        # Prea puține pentru statistici - filtrează doar pe confidence
         return [v for v in vertebrae if v["conf"] >= 0.4]
 
     heights = [v["h"] for v in vertebrae]
     widths  = [v["w"] for v in vertebrae]
-    avg_h = sum(heights) / len(heights)
-    avg_w = sum(widths) / len(widths)
+    x_positions = [v["x"] for v in vertebrae]
+
+    avg_h    = sum(heights) / len(heights)
+    avg_w    = sum(widths)  / len(widths)
+    median_x = sorted(x_positions)[len(x_positions) // 2]
 
     filtered = []
     for v in vertebrae:
-        # Elimină dacă e mai mare de 3x media (outlier clar)
         if v["h"] > 3 * avg_h or v["w"] > 3 * avg_w:
             continue
-        # Elimină dacă confidence e prea scăzut
         if v["conf"] < 0.4:
+            continue
+
+        if abs(v["x"] - median_x) > avg_w * 3:
             continue
         filtered.append(v)
 
     return filtered
 
-# ── Detectie vertebre ────────────────────────────────────────
+
 def detect_vertebrae(img: Image.Image):
     """
     Rulează YOLOv8 + NMS.
@@ -169,7 +167,7 @@ def detect_vertebrae(img: Image.Image):
     results = filter_vertebrae(results)
     return results
 
-# ── Calcul unghi Cobb ────────────────────────────────────────
+
 def compute_cobb_angle(vertebrae: list) -> dict:
     """
     Algoritmul Cobb din centrele bounding box-urilor vertebrelor.
@@ -186,7 +184,6 @@ def compute_cobb_angle(vertebrae: list) -> dict:
     centers = np.array([[v["x"], v["y"]] for v in vertebrae])
     n = len(centers)
 
-    # Unghiurile fiecărui segment față de orizontală (în grade)
     segment_angles = []
     for i in range(n - 1):
         dx = centers[i+1, 0] - centers[i, 0]
@@ -194,7 +191,7 @@ def compute_cobb_angle(vertebrae: list) -> dict:
         angle_deg = math.degrees(math.atan2(dy, dx))
         segment_angles.append(angle_deg)
 
-    # Cobb angle = diferența maximă dintre oricare două segmente
+    # Cobb angle = diferenta maxima dintre oricare doua segmente
     max_diff    = 0.0
     top_idx     = 0
     bottom_idx  = n - 1
@@ -216,7 +213,7 @@ def compute_cobb_angle(vertebrae: list) -> dict:
         "segmentAngles": [round(a, 2) for a in segment_angles]
     }
 
-# ── Vizualizare ──────────────────────────────────────────────
+
 def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
     """
     Desenează pe imagine:
@@ -228,7 +225,7 @@ def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
     vis = img.convert("RGB").copy()
     draw = ImageDraw.Draw(vis)
 
-    # Scală pentru grosimea liniilor (adaptivă la rezoluție)
+    # Scala pentru grosimea liniilor (adaptiva la rezolutie)
     lw = max(2, min(vis.width, vis.height) // 200)
 
     centers = [(v["x"], v["y"]) for v in vertebrae]
@@ -241,14 +238,14 @@ def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
         y2 = v["y"] + v["h"] / 2
         draw.rectangle([x1, y1, x2, y2], outline="#FFD700", width=lw)
 
-    # 2. Linie coloană (conectează centrele)
+    # 2. Linie coloana (conectează centrele)
     if len(centers) >= 2:
         draw.line(centers, fill="#00FF88", width=lw)
         for cx, cy in centers:
             r = lw * 2
             draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill="#00FF88")
 
-    # 3. Liniile Cobb (roșu) dacă unghiul a fost calculat
+    # 3. Liniile Cobb daca unghiul a fost calculat
     if cobb.get("angle") is not None and len(centers) >= 2:
         top_i    = cobb["topIndex"]
         bot_i    = cobb["bottomIndex"]
@@ -284,7 +281,7 @@ def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
     vis.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
-# ── Endpoints ────────────────────────────────────────────────
+
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -325,7 +322,7 @@ def predict_cobb():
         # 2. Calcul unghi Cobb
         cobb = compute_cobb_angle(vertebrae)
 
-        # 3. Vizualizare opțională
+        # 3. Vizualizare optionala
         viz_b64 = None
         if include_viz:
             viz_b64 = draw_visualization(img, vertebrae, cobb)
@@ -351,6 +348,6 @@ def predict_cobb():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-# ── Start ────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=False)

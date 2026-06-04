@@ -62,6 +62,14 @@ public class XrayService
                 .toList();
     }
 
+
+    private String classifyByCobb(double cobbAngle) {
+        if (cobbAngle < 10.0)  return "Normal";
+        if (cobbAngle < 25.0)  return "Mild";
+        if (cobbAngle < 40.0)  return "Moderate";
+        return "Severe";
+    }
+
     @Transactional
     public XrayResponseDTO uploadXray(Long patientId, MultipartFile file,
                                       String xrayName, String description) {
@@ -77,7 +85,6 @@ public class XrayService
         if (original != null && original.contains(".")) {
             extension = original.substring(original.lastIndexOf('.'));
         }
-
         String storedName = UUID.randomUUID() + extension;
 
         try {
@@ -95,10 +102,9 @@ public class XrayService
         xray.setXrayName(original != null ? original : storedName);
         xray.setDateUploaded(LocalDate.now());
         xray.setDescription(description);
-
         patient.getXrays().add(xray);
 
-        // ← Apelează AI clasificare severitate
+        // 1. DenseNet — clasificare initiala
         try {
             AIPredictionDTO prediction = scoliosisAIService.classify(file);
             if (prediction != null) {
@@ -106,21 +112,30 @@ public class XrayService
                 xray.setAiConfidence(prediction.getConfidence());
             }
         } catch (Exception e) {
-            // AI indisponibil — continuăm fără clasificare
+            // AI indisponibil
         }
 
+        // 2. Cobb — unghi + override clasificare (doar daca unghi realist)
         try {
             CobbAngleDTO cobb = scoliosisAIService.calculateCobb(file, true);
             if (cobb != null) {
-                xray.setCobbAngle(cobb.getCobbAngle());
                 xray.setCobbVisualization(cobb.getVisualization());
+                if (cobb.getCobbAngle() != null) {
+                    double angle = cobb.getCobbAngle();
+                    if (angle <= 80.0) {
+                        xray.setCobbAngle(cobb.getCobbAngle());
+                        xray.setAiClassification(classifyByCobb(angle));
+                    }
+                }
             }
         } catch (Exception e) {
-            // AI Cobb indisponibil — continuăm fără unghi
+            // Cobb indisponibil — ramane clasificarea DenseNet
         }
 
         return entityToDTO(xrayRepository.save(xray));
     }
+
+
     public XrayResponseDTO getXrayById(Long id)
     {
         Xray xray = xrayRepository.findById(id)
@@ -164,6 +179,7 @@ public class XrayService
         response.setPatientLastName(patient.getUser().getLastName());
 
         response.setAiClassification(xray.getAiClassification());
+        response.setAiConfidence(xray.getAiConfidence());
         response.setCobbAngle(xray.getCobbAngle());
         response.setCobbVisualization(xray.getCobbVisualization());
 
