@@ -44,22 +44,28 @@ public class PatientService
        return entityToDTO(patient);
    }
 
-   public PatientResponseDTO findByEmail(String email)
-   {
-       User user = userRepository.findByEmail(email)
-               .orElseThrow(() -> new RuntimeException("user not found"));
+    public PatientResponseDTO findByEmail(String email)
+    {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("user not found"));
 
-       Patient patient = patientRepository.findByUser(user)
-               .orElseThrow(() -> new RuntimeException("patient not found"));
+        PatientResponseDTO dto = new PatientResponseDTO();
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole());
 
-       PatientResponseDTO dto = new PatientResponseDTO();
-       dto.setCnp(patient.getCnp());
-       dto.setWeight(patient.getWeight());
-       dto.setAge(patient.getAge());
-       dto.setGender(patient.getGender());
-       dto.setHeight(patient.getHeight());
-       return dto;
-   }
+        patientRepository.findByUser(user).ifPresent(patient -> {
+            dto.setId(patient.getId());
+            dto.setCnp(patient.getCnp());
+            dto.setWeight(patient.getWeight());
+            dto.setAge(patient.getAge());
+            dto.setGender(patient.getGender());
+            dto.setHeight(patient.getHeight());
+        });
+
+        return dto;
+    }
 
    public List<PatientResponseDTO> getAllPatients()
    {

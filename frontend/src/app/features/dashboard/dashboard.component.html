@@ -127,8 +127,99 @@
 
     @if (role === 'ADMIN') {
     <div class="info-section">
-      <h3>Panou administrare</h3>
-      <p style="color: #666;">Ai acces complet la toate funcționalitățile sistemului.</p>
+      <h3>Pacienți</h3>
+      @if (allPatients.length > 0) {
+      <table class="patients-table">
+        <thead>
+        <tr>
+          <th>Nume</th>
+          <th>Email</th>
+          <th>CNP</th>
+          <th>Vârstă</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (patient of allPatients; track patient.id) {
+        <tr class="clickable-row" (click)="goToPatient(patient.id!)">
+          <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+          <td>{{ patient.email }}</td>
+          <td>{{ patient.cnp }}</td>
+          <td>{{ patient.age }} ani</td>
+        </tr>
+        }
+        </tbody>
+      </table>
+      } @else {
+      <p style="color: #888; text-align: center;">Nu există pacienți înregistrați.</p>
+      }
+    </div>
+
+    <div class="info-section">
+      <h3>Doctori</h3>
+      @if (allDoctors.length > 0) {
+      <table class="patients-table">
+        <thead>
+        <tr>
+          <th>Nume</th>
+          <th>Email</th>
+          <th>Specialitate</th>
+          <th>Pacienți asignați</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (doctor of allDoctors; track doctor.id) {
+        <tr class="clickable-row" (click)="goToDoctor(doctor.id!)">
+          <td>{{ doctor.firstName }} {{ doctor.lastName }}</td>
+          <td>{{ doctor.email }}</td>
+          <td>{{ doctor.specialty }}</td>
+          <td>{{ (doctor.patients ?? []).length }}</td>
+        </tr>
+        }
+        </tbody>
+      </table>
+
+      @if (selectedDoctor) {
+      <div class="info-section" style="margin-top: 16px; border-top: 1px solid #e0e0e0; padding-top: 16px;">
+        <h3>{{ selectedDoctor.firstName }} {{ selectedDoctor.lastName }}</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Email</span>
+            <span class="value">{{ selectedDoctor.email }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Specialitate</span>
+            <span class="value">{{ selectedDoctor.specialty }}</span>
+          </div>
+        </div>
+
+        @if ((selectedDoctor.patients ?? []).length > 0) {
+        <table class="patients-table" style="margin-top: 12px;">
+          <thead>
+          <tr>
+            <th>Nume</th>
+            <th>Vârstă</th>
+            <th>Gen</th>
+          </tr>
+          </thead>
+          <tbody>
+          @for (patient of selectedDoctor.patients; track patient.id) {
+          <tr class="clickable-row" (click)="goToPatient(patient.id)">
+            <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+            <td>{{ patient.age }} ani</td>
+            <td>{{ patient.gender }}</td>
+          </tr>
+          }
+          </tbody>
+        </table>
+        } @else {
+        <p style="color: #888; text-align: center;">Niciun pacient asignat.</p>
+        }
+      </div>
+      }
+
+      } @else {
+      <p style="color: #888; text-align: center;">Nu există doctori înregistrați.</p>
+      }
     </div>
     }
 

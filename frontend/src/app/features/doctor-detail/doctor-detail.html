@@ -1,0 +1,60 @@
+<div class="doctor-detail-wrapper">
+  <div class="doctor-detail-card">
+
+    @if (doctor) {
+    <div class="header">
+      <h2>{{ doctor.firstName }} {{ doctor.lastName }}</h2>
+      <p class="email">{{ doctor.email }}</p>
+      <span class="role-badge role-doctor">DOCTOR</span>
+    </div>
+
+    <div class="info-section">
+      <h3>Informații</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Specialitate</span>
+          <span class="value">{{ doctor.specialty }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Pacienți asignați</span>
+          <span class="value">{{ (doctor.patients ?? []).length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>Pacienți</h3>
+      @if ((doctor.patients ?? []).length > 0) {
+      <table class="patients-table">
+        <thead>
+        <tr>
+          <th>Nume</th>
+          <th>Vârstă</th>
+          <th>Gen</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (patient of doctor.patients; track patient.id) {
+        <tr class="clickable-row" (click)="goToPatient(patient.id)">
+          <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+          <td>{{ patient.age }} ani</td>
+          <td>{{ patient.gender }}</td>
+        </tr>
+        }
+        </tbody>
+      </table>
+      } @else {
+      <p class="empty-msg">Niciun pacient asignat.</p>
+      }
+    </div>
+
+    } @else if (error) {
+    <p class="error-msg">{{ error }}</p>
+    } @else {
+    <p class="loading-msg">Se încarcă...</p>
+    }
+
+    <button class="back-btn" (click)="goBack()">← Înapoi</button>
+
+  </div>
+</div>

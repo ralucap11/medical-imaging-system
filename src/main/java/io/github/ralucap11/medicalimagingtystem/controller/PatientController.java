@@ -53,7 +53,7 @@ public class PatientController
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN')")
+//    @PreAuthorize("hasAnyRole('ADMIN, PATIENT')")
     public ResponseEntity<PatientResponseDTO> createPatient(@RequestBody PatientRequestDTO request)
     {
         try
@@ -112,9 +112,13 @@ public class PatientController
 
     @GetMapping("/me")
     public ResponseEntity<PatientResponseDTO> getMyInfo(Authentication authentication) {
-        String email = authentication.getName();
-        PatientResponseDTO patient = patientService.findByEmail(email);
-        return ResponseEntity.ok(patient);
+        try {
+            String email = authentication.getName();
+            PatientResponseDTO patient = patientService.findByEmail(email);
+            return ResponseEntity.ok(patient);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/{patientId}/doctors")

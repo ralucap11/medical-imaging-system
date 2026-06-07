@@ -150,11 +150,10 @@ public class DoctorController
         }
     }
 
-    // Listează pacienții unui doctor
+
     @GetMapping("/{doctorId}/patients")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
-    public ResponseEntity<List<PatientSummaryDTO>> getPatients(
-            @PathVariable Long doctorId)
+    public ResponseEntity<List<PatientSummaryDTO>> getPatients (@PathVariable Long doctorId)
     {
         return ResponseEntity.ok(doctorService.getPatientsForDoctor(doctorId));
     }

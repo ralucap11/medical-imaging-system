@@ -1,0 +1,103 @@
+.doctor-detail-wrapper {
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.doctor-detail-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+
+  h2 { font-size: 1.6rem; margin-bottom: 4px; }
+  .email { color: #888; font-size: 0.9rem; margin-bottom: 8px; }
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  &.role-doctor { background: #e8f5e9; color: #2e7d32; }
+}
+
+.info-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+
+  h3 { font-size: 1rem; color: #333; margin-bottom: 16px; }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .label { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+  .value { font-size: 1rem; font-weight: 600; color: #333; }
+}
+
+.patients-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    color: #999;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #eee;
+  }
+
+  td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+}
+
+.clickable-row {
+  cursor: pointer;
+  &:hover { background: #f5f5f5; }
+}
+
+.back-btn {
+  margin-top: 24px;
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+
+  &:hover { background: #c62828; }
+}
+
+.empty-msg { color: #888; text-align: center; padding: 12px 0; }
+.error-msg { color: #e53935; text-align: center; }
+.loading-msg { color: #888; text-align: center; }

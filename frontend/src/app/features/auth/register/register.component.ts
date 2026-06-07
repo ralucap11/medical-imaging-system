@@ -12,7 +12,7 @@ import { AuthService, RegisterRequest } from '../../../core/services/auth.servic
   styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent {
-  form: RegisterRequest = { username: '', email: '', password: '' };
+  form: RegisterRequest = { firstName: '', lastName: '', email: '', password: '' };
   success = '';
   error = '';
   loading = false;

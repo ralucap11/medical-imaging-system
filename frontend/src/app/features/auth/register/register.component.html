@@ -1,23 +1,27 @@
 <div class="auth-wrapper">
   <div class="auth-card">
-
     <h2>Înregistrare</h2>
-
     <div class="error-msg"   *ngIf="error">{{ error }}</div>
     <div class="success-msg" *ngIf="success">{{ success }}</div>
-
     <form (ngSubmit)="onSubmit()">
-
       <div class="field">
-        <label>Username</label>
+        <label>Prenume</label>
         <input
           type="text"
-          [(ngModel)]="form.username"
-          name="username"
-          placeholder="Username"
+          [(ngModel)]="form.firstName"
+          name="firstName"
+          placeholder="Prenume"
           required />
       </div>
-
+      <div class="field">
+        <label>Nume</label>
+        <input
+          type="text"
+          [(ngModel)]="form.lastName"
+          name="lastName"
+          placeholder="Nume"
+          required />
+      </div>
       <div class="field">
         <label>Email</label>
         <input
@@ -27,7 +31,6 @@
           placeholder="adresa@email.com"
           required />
       </div>
-
       <div class="field">
         <label>Password</label>
         <input
@@ -37,17 +40,14 @@
           placeholder="Minimum 8 characters"
           required />
       </div>
-
       <button type="submit" [disabled]="loading">
-        {{ loading ? 'loading...' : 'Create account' }}
+        {{ loading ? 'Se încarcă...' : 'Creare cont' }}
       </button>
-
     </form>
-
     <p class="switch-link">
       Already have an account?
       <a routerLink="/auth/login">Login</a>
     </p>
-
   </div>
-</div>
+</div>e
+

@@ -156,7 +156,6 @@ public class DoctorService
         return entityToDTO(updatedDoctor);
     }
 
-    // Elimină pacient de la doctor
     public DoctorResponseDTO unassignPatient(Long doctorId, Long patientId)
     {
         Doctor doctor = doctorRepository.findById(doctorId)
@@ -172,7 +171,7 @@ public class DoctorService
         return entityToDTO(updatedDoctor);
     }
 
-    // Returnează toți pacienții unui doctor
+
     public List<PatientSummaryDTO> getPatientsForDoctor(Long doctorId)
     {
         Doctor doctor = doctorRepository.findById(doctorId)
