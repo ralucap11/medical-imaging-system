@@ -7,11 +7,12 @@ import { JwtService } from '../../core/services/jwt.service';
 import { Router } from '@angular/router';
 import { XrayUpload } from '../xray-upload/xray-upload';
 import { AsyncPipe, CommonModule } from '@angular/common';
+import {XrayList} from '../xray-list/xray-list';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, AsyncPipe, XrayUpload],
+  imports: [CommonModule, AsyncPipe, XrayList],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

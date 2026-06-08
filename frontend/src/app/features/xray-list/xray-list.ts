@@ -7,7 +7,7 @@ import { finalize } from 'rxjs';
 @Component({
   selector: 'app-xray-list',
   standalone: true,
-  imports: [CommonModule, XrayUpload],
+  imports: [CommonModule],
   templateUrl: './xray-list.html',
   styleUrls: ['./xray-list.css']
 })

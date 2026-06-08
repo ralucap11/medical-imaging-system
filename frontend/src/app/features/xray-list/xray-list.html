@@ -1,9 +1,4 @@
 <div class="xray-page">
-  <app-xray-upload
-    [patientId]="patientId"
-    (uploaded)="onXrayUploaded($event)">
-  </app-xray-upload>
-
   <div class="xray-list">
     <div class="list-header" (click)="toggleCollapse()">
       <h3>Radiografii ({{ xrays().length }})</h3>
@@ -12,59 +7,57 @@
 
     @if (!isCollapsed()) {
 
-    @if (isLoading()) {
-    <div class="loading">Se încarcă...</div>
-    }
-
-    @if (loadError()) {
-    <div class="error">❌ {{ loadError() }}</div>
-    }
-
-    @if (!isLoading() && xrays().length === 0) {
-    <div class="empty">
-      Niciun fișier radiografic încărcat pentru acest pacient.
-    </div>
-    }
-
-    @for (xray of xrays(); track xray.id) {
-    <div class="xray-card">
-
-      <div class="card-header">
-        <h4>{{ xray.xrayName }}</h4>
-        <button
-          class="btn-delete"
-          (click)="deleteXray(xray.id)"
-          [disabled]="deletingId() === xray.id"
-          title="Șterge radiografia">
-          {{ deletingId() === xray.id ? '...' : '🗑' }}
-        </button>
-      </div>
-
-      <div class="meta">
-        <span>📅 {{ xray.dateUploaded }}</span>
-        @if (xray.cobbAngle !== null) {
-        <span class="cobb">📐 Cobb: {{ xray.cobbAngle }}°</span>
-        }
-        @if (xray.aiClassification) {
-        <span class="classification" [class]="xray.aiClassification.toLowerCase()">
-                {{ xray.aiClassification }}
-              </span>
-        }
-      </div>
-
-      @if (xray.cobbVisualization) {
-      <img [src]="'data:image/png;base64,' + xray.cobbVisualization"
-           alt="Cobb visualization"
-           class="cobb-image" />
+      @if (isLoading()) {
+        <div class="loading">Se încarcă...</div>
       }
 
-      @if (xray.description) {
-      <p class="description">{{ xray.description }}</p>
+      @if (loadError()) {
+        <div class="error">❌ {{ loadError() }}</div>
       }
 
-    </div>
-    }
+      @if (!isLoading() && xrays().length === 0) {
+        <div class="empty">
+          Niciun fișier radiografic încărcat pentru acest pacient.
+        </div>
+      }
 
+      @for (xray of xrays(); track xray.id) {
+        <div class="xray-card">
+
+          <div class="card-header">
+            <h4>{{ xray.xrayName }}</h4>
+            <button
+              class="btn-delete"
+              (click)="deleteXray(xray.id)"
+              [disabled]="deletingId() === xray.id"
+              title="Șterge radiografia">
+              {{ deletingId() === xray.id ? '...' : '🗑' }}
+            </button>
+          </div>
+
+          <div class="meta">
+            <span>📅 {{ xray.dateUploaded }}</span>
+            @if (xray.cobbAngle !== null) {
+            <span class="cobb">📐 Cobb: {{ xray.cobbAngle }}°</span>
+            }
+            @if (xray.aiClassification) {
+            <span class="classification" [class]="xray.aiClassification.toLowerCase()">
+                    {{ xray.aiClassification }}
+                  </span>
+            }
+          </div>
+
+          @if (xray.cobbVisualization) {
+          <img [src]="'data:image/png;base64,' + xray.cobbVisualization"
+               alt="Cobb visualization"
+               class="cobb-image" />
+          }
+
+          @if (xray.description) {
+          <p class="description">{{ xray.description }}</p>
+          }
+        </div>
+      }
     }
   </div>
 </div>

@@ -1,11 +1,11 @@
 <div class="dashboard-wrapper">
   <div class="dashboard-card">
 
-    @if (patient) {
+    @if (patient()) {
     <div class="header">
       <button class="btn-back" (click)="goBack()">← Înapoi</button>
-      <h2>{{ patient.firstName }} {{ patient.lastName }}</h2>
-      <p class="email">{{ patient.email }}</p>
+      <h2>{{ patient()!.firstName }} {{ patient()!.lastName }}</h2>
+      <p class="email">{{ patient()!.email }}</p>
     </div>
 
     <div class="info-section">
@@ -13,30 +13,34 @@
       <div class="info-grid">
         <div class="info-item">
           <span class="label">CNP</span>
-          <span class="value">{{ patient.cnp }}</span>
+          <span class="value">{{ patient()!.cnp }}</span>
         </div>
         <div class="info-item">
           <span class="label">Vârstă</span>
-          <span class="value">{{ patient.age }} ani</span>
+          <span class="value">{{ patient()!.age }} ani</span>
         </div>
         <div class="info-item">
           <span class="label">Gen</span>
-          <span class="value">{{ patient.gender }}</span>
+          <span class="value">{{ patient()!.gender }}</span>
         </div>
         <div class="info-item">
           <span class="label">Înălțime</span>
-          <span class="value">{{ patient.height }} cm</span>
+          <span class="value">{{ patient()!.height }} cm</span>
         </div>
         <div class="info-item">
           <span class="label">Greutate</span>
-          <span class="value">{{ patient.weight }} kg</span>
+          <span class="value">{{ patient()!.weight }} kg</span>
         </div>
       </div>
     </div>
 
     <div class="info-section">
+      <app-xray-upload [patientId]="patient()!.id!" (uploaded)="onUploaded($event)"></app-xray-upload>
+    </div>
+
+    <div class="info-section">
       <h3>Radiografii</h3>
-      <app-xray-list [patientId]="patient.id!"></app-xray-list>
+      <app-xray-list [patientId]="patient()!.id!"></app-xray-list>
     </div>
 
     } @else {
