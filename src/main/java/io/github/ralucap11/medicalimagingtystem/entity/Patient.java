@@ -18,26 +18,25 @@ public class Patient
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
-    @Column(name = "cnp", nullable = false, unique = true)
+    @Column(name = "cnp", unique = true)
     private String cnp;
 
-    @Column(name = "weight", nullable = false)
+    @Column(name = "weight")
     private Double weight;
 
-    @Column(name = "age", nullable = false)
+    @Column(name = "age")
     private Integer age;
 
-    @Column(name = "gender", nullable = false)
+    @Column(name = "gender")
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    @Column(name = "height", nullable = false)
+    @Column(name = "height")
     private Double height;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
-
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
     private List<Xray> xrays = new ArrayList<>();

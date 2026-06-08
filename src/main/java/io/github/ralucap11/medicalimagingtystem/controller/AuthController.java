@@ -2,12 +2,11 @@ package io.github.ralucap11.medicalimagingtystem.controller;
 
 import io.github.ralucap11.medicalimagingtystem.dto.AuthRequestDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.AuthResponseDTO;
+import io.github.ralucap11.medicalimagingtystem.dto.PatientResponseDTO;
 import io.github.ralucap11.medicalimagingtystem.dto.RegisterRequestDTO;
-import io.github.ralucap11.medicalimagingtystem.entity.Role;
-import io.github.ralucap11.medicalimagingtystem.entity.User;
-import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
 import io.github.ralucap11.medicalimagingtystem.service.CustomUserDetailsService;
 import io.github.ralucap11.medicalimagingtystem.service.JwtService;
+import io.github.ralucap11.medicalimagingtystem.service.RegisterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,20 +21,17 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
+    private final RegisterService registerService;
     private final JwtService jwtService;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager,
                           CustomUserDetailsService userDetailsService,
                           JwtService jwtService,
-                          UserRepository userRepository,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder, RegisterService registerService) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtService = jwtService;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.registerService = registerService;
     }
 
     @PostMapping("/login")
@@ -50,20 +46,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequestDTO request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
-        User user = new User();
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.PATIENT);
-
-        userRepository.save(user);
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        PatientResponseDTO registeredPatient = registerService.register(request);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(registeredPatient.getEmail());
         String jwt = jwtService.generateToken(userDetails);
         return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponseDTO(jwt));
     }
