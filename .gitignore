@@ -34,3 +34,6 @@ build/
 
 .env
 
+
+
+/src/main/java/io/github/ralucap11/medicalimagingtystem/ai_service/venv/

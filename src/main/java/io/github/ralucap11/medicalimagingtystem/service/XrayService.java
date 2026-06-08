@@ -115,7 +115,6 @@ public class XrayService
             // AI indisponibil
         }
 
-        // 2. Cobb — unghi + override clasificare (doar daca unghi realist)
         try {
             CobbAngleDTO cobb = scoliosisAIService.calculateCobb(file, true);
             if (cobb != null) {
