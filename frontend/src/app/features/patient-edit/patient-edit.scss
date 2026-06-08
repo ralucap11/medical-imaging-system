@@ -1,0 +1,78 @@
+// Titlul dialogului
+h2[mat-dialog-title] {
+  color: #1a1a2e;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+// Conținutul dialogului
+mat-dialog-content {
+  padding-top: 1rem !important;
+  min-width: 420px;
+}
+
+// Rânduri cu două câmpuri alăturate
+.form-row {
+  display: flex;
+  gap: 1rem;
+
+  .form-group {
+    flex: 1;
+  }
+}
+
+// Câmp individual
+.form-group {
+  margin-bottom: 1.2rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    background: white;
+
+    &:focus {
+      outline: none;
+      border-color: #4a90d9;
+      box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+    }
+  }
+}
+
+// Mesaj eroare inline (sub câmp)
+.error-msg {
+  display: block;
+  color: #c0392b;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+// Mesaj eroare general (sus în dialog)
+.dialog-error {
+  background: #ffe0e0;
+  color: #c0392b;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+// Butoane
+mat-dialog-actions {
+  padding: 1rem 0 0.5rem !important;
+  gap: 0.5rem;
+}

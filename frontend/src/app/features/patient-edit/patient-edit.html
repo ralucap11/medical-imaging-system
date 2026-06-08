@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>Editează pacient</h2>
+
+<mat-dialog-content [formGroup]="form">
+  @if (error) {
+  <p class="dialog-error">❌ {{ error }}</p>
+  }
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Prenume</label>
+      <input type="text" formControlName="firstName" />
+    </div>
+    <div class="form-group">
+      <label>Nume</label>
+      <input type="text" formControlName="lastName" />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" formControlName="email" />
+    @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+    <span class="error-msg">Email invalid</span>
+    }
+  </div>
+
+  <div class="form-group">
+    <label>CNP</label>
+    <input type="text" formControlName="cnp" />
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Vârstă</label>
+      <input type="number" formControlName="age" />
+    </div>
+    <div class="form-group">
+      <label>Gen</label>
+      <select formControlName="gender">
+        <option value="">-- Selectează --</option>
+        <option value="MALE">Masculin</option>
+        <option value="FEMALE">Feminin</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Înălțime (cm)</label>
+      <input type="number" formControlName="height" />
+    </div>
+    <div class="form-group">
+      <label>Greutate (kg)</label>
+      <input type="number" formControlName="weight" />
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Anulează</button>
+  <button mat-flat-button color="primary"
+          (click)="submit()"
+          [disabled]="form.invalid || isLoading">
+    {{ isLoading ? 'Se salvează...' : 'Salvează' }}
+  </button>
+</mat-dialog-actions>
