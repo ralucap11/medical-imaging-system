@@ -180,6 +180,20 @@
   }
 }
 
+.btn-edit {
+    background: #2b8bfb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+      background: #2b43fb;
+    }
+}
+
 .btn-toggle {
   background: #f0f0f0;
   color: #333;

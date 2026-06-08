@@ -1,13 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import {Component, OnInit, ChangeDetectorRef, signal} from '@angular/core';
 import { PatientService, PatientInfo } from '../../core/services/patient.service';
 import { DoctorService, DoctorInfo } from '../../core/services/doctor.service';
 import { Observable, BehaviorSubject, switchMap } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { JwtService } from '../../core/services/jwt.service';
 import { Router } from '@angular/router';
-import { XrayUpload } from '../xray-upload/xray-upload';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import {XrayList} from '../xray-list/xray-list';
+import {PatientEditDialog} from '../patient-edit/patient-edit';
+import {MatDialog} from '@angular/material/dialog';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,11 +24,10 @@ export class DashboardComponent implements OnInit {
   patientInfo$: Observable<PatientInfo> | null = null;
   doctorInfo$: Observable<DoctorInfo> | null = null;
   private refreshTrigger$ = new BehaviorSubject<void>(undefined);
-  allPatients: PatientInfo[] = [];
+  allPatients = signal<PatientInfo[]>([]);
   allDoctors: DoctorInfo[] = [];
   currentDoctorId: number = 0;
   showAssignPanel = false;
-
 
   constructor(
     private auth: AuthService,
@@ -35,7 +35,8 @@ export class DashboardComponent implements OnInit {
     private patientService: PatientService,
     private doctorService: DoctorService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {
     const token = this.auth.getToken();
     if (token) {
@@ -59,14 +60,14 @@ export class DashboardComponent implements OnInit {
         next: (info) => { this.currentDoctorId = info.id ?? 0; }
       });
       this.patientService.getAllPatients().subscribe({
-        next: (patients) => { this.allPatients = patients; }
+        next: (patients) => { this.allPatients.set(patients); }
       });
     }
 
     if (this.role === 'ADMIN') {
       this.patientService.getAllPatients().subscribe({
         next: (patients) => {
-          this.allPatients = patients;
+          this.allPatients.set(patients);
           this.cdr.detectChanges();   // ← forțează update
         },
         error: (err) => console.error('Eroare patients:', err)
@@ -107,6 +108,23 @@ export class DashboardComponent implements OnInit {
 
   goToPatient(patientId: number): void {
     this.router.navigate(['/patient', patientId]);
+  }
+
+  openEditPatientDialog(patientId: number): void {
+    this.dialog.open(PatientEditDialog, {
+      width: '480px',
+      data: { patientId }
+    })
+      .afterClosed()
+      .subscribe((updated: PatientInfo) => {
+        if (!updated) return;
+        this.patientService.getAllPatients().subscribe({
+          next: (patients) => this.allPatients.set(patients),
+          error: (err) => console.error('Refresh eșuat:', err)
+        });
+
+        this.refreshDoctorInfo();
+      });
   }
 
   goToDoctor(doctorId: number): void {

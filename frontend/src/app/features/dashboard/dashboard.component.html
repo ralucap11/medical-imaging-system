@@ -76,11 +76,14 @@
           <td>
             <span class="button-container">
               <button class="btn-assign" (click)="goToPatient(patient.id!)">
-              Vezi
-            </button>
-            <button class="btn-unassign" (click)="$event.stopPropagation(); unassign(patient.id!)">
-              Elimină
-            </button>
+                Vezi
+              </button>
+              <button class="btn-edit" (click)="$event.stopPropagation(); openEditPatientDialog(patient.id!)">
+                Editează
+              </button>
+              <button class="btn-unassign" (click)="$event.stopPropagation(); unassign(patient.id!)">
+                Elimină
+              </button>
             </span>
           </td>
         </tr>
@@ -109,7 +112,7 @@
         </tr>
         </thead>
         <tbody>
-        @for (patient of allPatients; track patient.id) {
+        @for (patient of allPatients(); track patient.id) {
         <tr>
           <td>{{ patient.firstName }} {{ patient.lastName }}</td>
           <td>{{ patient.cnp }}</td>
@@ -144,7 +147,7 @@
         </tr>
         </thead>
         <tbody>
-        @for (patient of allPatients; track patient.id) {
+        @for (patient of allPatients(); track patient.id) {
         <tr class="clickable-row" (click)="goToPatient(patient.id!)">
           <td>{{ patient.firstName }} {{ patient.lastName }}</td>
           <td>{{ patient.email }}</td>

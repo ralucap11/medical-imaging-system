@@ -13,7 +13,6 @@ export interface PatientInfo {
   gender: string;
   height: number;
   weight: number;
-
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,5 +31,9 @@ export class PatientService {
 
   getPatientById(id: number): Observable<PatientInfo> {
     return this.http.get<PatientInfo>(`${this.apiUrl}/patient/${id}`);
+  }
+
+  updatePatient(id: number, data: PatientInfo): Observable<PatientInfo> {
+    return this.http.put<PatientInfo>(`${this.apiUrl}/patient/${id}`, data);
   }
 }
