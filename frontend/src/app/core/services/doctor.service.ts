@@ -48,4 +48,12 @@ export class DoctorService {
   getDoctorById(id: number): Observable<DoctorInfo> {
     return this.http.get<DoctorInfo>(`${environment.apiUrl}/doctor/${id}`);
   }
+
+  updateDoctor(id: number, data: Partial<DoctorInfo>): Observable<DoctorInfo> {
+    return this.http.put<DoctorInfo>(`${environment.apiUrl}/doctor/${id}`, data);
+  }
+
+  deleteDoctor(id: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/doctor/${id}`);
+  }
 }

@@ -1,215 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+* { box-sizing: border-box; }
+
 .dashboard-wrapper {
   min-height: 100vh;
   background: #f0f4f8;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 2rem;
+  align-items: flex-start;
+  padding: 2rem 1.5rem;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .dashboard-card {
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  padding: 2.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
   width: 100%;
-  max-width: 520px;
+  max-width: 1100px;
+  padding: 2.5rem;
+  animation: fadeIn 0.3s ease;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
 .header {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eef0f3;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 
   h2 {
-    font-size: 1.6rem;
-    color: #1a1a2e;
-    margin-bottom: 0.3rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    flex: 1;
   }
 
   .email {
-    color: #888;
+    color: #6b7280;
     font-size: 0.9rem;
-    margin-bottom: 0.8rem;
+    margin: 0;
   }
 }
 
 .role-badge {
-  display: inline-block;
-  padding: 0.3rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
   text-transform: uppercase;
 
-  &.role-patient { background: #e8f4fd; color: #2980b9; }
-  &.role-doctor  { background: #e8f8f0; color: #27ae60; }
-  &.role-admin   { background: #fef0e8; color: #e67e22; }
+  &.role-admin   { background: #fff3cd; color: #92400e; }
+  &.role-doctor  { background: #dbeafe; color: #1e40af; }
+  &.role-patient { background: #d1fae5; color: #065f46; }
 }
 
+
 .info-section {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 
   h3 {
-    margin-bottom: 1.2rem;
-    color: #1a1a2e;
-    font-size: 1.1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f3f4f6;
   }
 }
 
+
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 1rem;
 }
 
 .info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
 
   .label {
-    font-size: 0.8rem;
-    color: #888;
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 0.3rem;
   }
 
   .value {
+    font-size: 1rem;
     font-weight: 600;
-    color: #1a1a2e;
+    color: #111827;
+    font-family: 'DM Mono', monospace;
   }
 }
 
-.loading {
-  text-align: center;
-  color: #888;
-  padding: 1rem;
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 0.8rem;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #c0392b;
-  }
-}
 
 .patients-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 12px;
+  font-size: 0.9rem;
 
-  th, td {
-    text-align: left;
-    padding: 10px 16px;
-    white-space: nowrap;
+  thead tr {
+    border-bottom: 2px solid #f3f4f6;
   }
 
   th {
-    font-size: 11px;
-    font-weight: 600;
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #888;
-    border-bottom: 1px solid #eee;
+    color: #9ca3af;
+    white-space: nowrap;
   }
 
   td {
-    font-size: 14px;
-    color: #333;
-    border-bottom: 1px solid #f5f5f5;
+    padding: 0.85rem 1rem;
+    color: #374151;
+    border-bottom: 1px solid #f9fafb;
+    white-space: nowrap;
   }
 
-  // Coloana Nume — mai lată
-  th:first-child, td:first-child {
-    width: 35%;
+  tbody tr {
+
+
+    &:hover { background: #f8fafc; }
+    &:last-child td { border-bottom: none; }
   }
 
-  // Coloana Vârstă / CNP
-  th:nth-child(2), td:nth-child(2) {
-    width: 25%;
-  }
-
-  // Coloana Gen
-  th:nth-child(3), td:nth-child(3) {
-    width: 20%;
-  }
-
-  // Coloana Acțiuni — centrată
-  th:last-child, td:last-child {
-    width: 20%;
-    text-align: center;
-  }
+  .clickable-row { cursor: pointer; }
 }
 
-.btn-unassign {
-  background: #ff4d4d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 12px;
-  cursor: pointer;
 
-  &:hover {
-    background: #e03333;
-  }
+.button-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .btn-assign {
-  background: #4caf50;
-  color: white;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
   border: none;
   border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 12px;
   cursor: pointer;
+  transition: all 0.15s ease;
+  background: #dbeafe;
+  color: #1d4ed8;
 
-  &:hover {
-    background: #388e3c;
-  }
+  &:hover { background: #bfdbfe; }
 }
 
 .btn-edit {
-    background: #2b8bfb;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 12px;
-    cursor: pointer;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #e0f2fe;
+  color: #0369a1;
 
-    &:hover {
-      background: #2b43fb;
-    }
+  &:hover { background: #bae6fd; }
+}
+
+.btn-unassign {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fee2e2;
+  color: #dc2626;
+
+  &:hover { background: #fecaca; }
 }
 
 .btn-toggle {
-  background: #f0f0f0;
-  color: #333;
-  border: none;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1.5px solid #d1d5db;
   border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
   cursor: pointer;
-  margin-bottom: 4px;
+  background: white;
+  color: #374151;
+  transition: all 0.15s ease;
 
   &:hover {
-    background: #e0e0e0;
+    border-color: #4a90d9;
+    color: #4a90d9;
   }
 }
 
-.button-container {
-  display: inline-flex;
-  gap: 10px;
+
+.logout-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  font-family: 'DM Sans', sans-serif;
+
+  &:hover { background: #dc2626; }
+}
+
+.empty-msg,
+p[style*="text-align: center"] {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem 0;
+  font-size: 0.9rem;
 }
