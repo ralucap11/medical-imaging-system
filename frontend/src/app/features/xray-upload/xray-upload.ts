@@ -2,11 +2,13 @@ import {Component, EventEmitter, Input, Output, signal} from '@angular/core';
 import { XrayService, XrayResponse } from '../../core/services/xray.service';
 import {finalize} from 'rxjs';
 import {CommonModule} from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+
 
 @Component({
   selector: 'app-xray-upload',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './xray-upload.html',
   styleUrls: ['./xray-upload.css']
 })

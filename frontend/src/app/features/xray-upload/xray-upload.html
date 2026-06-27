@@ -17,9 +17,18 @@
   <span>{{ selectedFile()!.name }}</span>
   }
 
+  <div class="ai-disclaimer">
+    <mat-icon>info_outline</mat-icon>
+    <span>
+      Clasificarea severității și calculul unghiului Cobb sunt generate automat
+      de modele AI și au caracter orientativ. Rezultatele trebuie validate de un
+      medic specialist și nu înlocuiesc diagnosticul clinic.
+    </span>
+  </div>
+
   @if (uploadResult()) {
   <div class="success">
-    ✅ Radiografia a fost încărcată cu succes!
+      Radiografia a fost încărcată cu succes!
     <small>Fișier: {{ uploadResult()!.fileName }}</small>
   </div>
   }

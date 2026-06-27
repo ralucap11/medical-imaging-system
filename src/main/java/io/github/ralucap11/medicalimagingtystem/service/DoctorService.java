@@ -101,11 +101,12 @@ public class DoctorService
 
     public void deleteDoctor(Long id)
     {
-        if(!doctorRepository.existsById(id))
-        {
-            throw new ResourceNotFoundException("doctor not found");
-        }
-        doctorRepository.deleteById(id);
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("doctor not found"));
+
+        doctor.getPatients().clear();
+
+        doctorRepository.delete(doctor);
     }
 
     public DoctorResponseDTO getByEmail(String email) {

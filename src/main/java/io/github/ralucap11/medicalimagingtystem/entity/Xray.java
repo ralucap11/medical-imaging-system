@@ -51,6 +51,5 @@ public class Xray
     @JoinColumn(name="patient_id", nullable = false)
     private Patient patient;
 
-    @OneToOne(mappedBy = "xray", cascade = CascadeType.ALL)
-    private Diagnosis diagnosis;
+
 }

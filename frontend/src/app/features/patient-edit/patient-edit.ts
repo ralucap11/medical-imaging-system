@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { PatientService, PatientInfo } from '../../core/services/patient.service';
+import { DiagnosisDetail } from '../diagnosis-detail/diagnosis-detail';
 
 @Component({
   selector: 'app-edit-patient-dialog',
@@ -12,7 +13,8 @@ import { PatientService, PatientInfo } from '../../core/services/patient.service
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatButtonModule
+    MatButtonModule,
+    DiagnosisDetail
   ],
   templateUrl: './patient-edit.html',
   styleUrls: ['./patient-edit.scss']

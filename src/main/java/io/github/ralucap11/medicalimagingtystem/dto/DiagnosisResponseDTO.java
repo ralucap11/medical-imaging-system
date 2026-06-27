@@ -12,11 +12,8 @@ public class DiagnosisResponseDTO {
     private String title;
     private String description;
     private LocalDate date;
-    private Long xrayId;
-    private String xrayName;
+    private Long patientId;
     private String doctorFirstName;
     private String doctorLastName;
 
-    private String aiClassification; 
-    private Double cobbAngle;
 }

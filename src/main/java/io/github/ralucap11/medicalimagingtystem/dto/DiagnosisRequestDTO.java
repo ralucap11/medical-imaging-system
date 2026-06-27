@@ -10,5 +10,4 @@ import java.time.LocalDate;
 public class DiagnosisRequestDTO {
     private String title;
     private String description;
-    private LocalDate date;
 }

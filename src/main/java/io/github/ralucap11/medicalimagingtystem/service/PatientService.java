@@ -14,6 +14,7 @@ import io.github.ralucap11.medicalimagingtystem.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -154,11 +155,16 @@ public class PatientService
 
    public void deletePatient(Long id)
    {
-       if(!patientRepository.existsById(id))
-       {
-           throw new ResourceNotFoundException("patient not found");
+       Patient patient = patientRepository.findById(id)
+               .orElseThrow(() -> new ResourceNotFoundException("patient not found"));
+
+       for (Doctor doctor : new ArrayList<>(patient.getDoctors())) {
+           doctor.getPatients().remove(patient);
        }
-       patientRepository.deleteById(id);
+
+       patient.getDoctors().clear();
+
+       patientRepository.delete(patient);
    }
 
    private PatientResponseDTO entityToDTO(Patient patient)

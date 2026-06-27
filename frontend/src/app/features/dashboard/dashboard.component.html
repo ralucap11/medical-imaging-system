@@ -35,6 +35,13 @@
       </div>
     </div>
     <div class="info-section">
+      <app-diagnosis-detail
+        [patientId]="patientInfo.id!"
+        [canEdit]="false">
+      </app-diagnosis-detail>
+    </div>
+
+    <div class="info-section">
       <h3>Radiografii</h3>
       <app-xray-list [patientId]="patientInfo.id!"></app-xray-list>
     </div>

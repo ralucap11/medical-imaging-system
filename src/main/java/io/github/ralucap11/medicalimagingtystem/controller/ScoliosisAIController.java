@@ -103,8 +103,8 @@ public class ScoliosisAIController {
         return ResponseEntity.ok(Map.of(
                 "classifierService", classifierUp ? "UP" : "DOWN",
                 "classifierMessage", classifierUp
-                        ? "ConvNeXt service is running (port 5001)."
-                        : "ConvNeXt service is not reachable. Start with: python app.py",
+                        ? "DenseNet-121 service is running (port 5001)."
+                        : "DenseNet-121 service is not reachable. Start with: python app.py",
                 "cobbService",       cobbUp ? "UP" : "DOWN",
                 "cobbMessage",       cobbUp
                         ? "Cobb service is running (port 5002)."

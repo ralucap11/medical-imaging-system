@@ -40,8 +40,13 @@
           placeholder="Minimum 8 characters"
           required />
       </div>
-      <button type="submit" [disabled]="loading">
-        {{ loading ? 'Se încarcă...' : 'Creare cont' }}
+      <button type="submit" [disabled]="loading" class="submit-btn">
+        @if (!loading) {
+          Creare cont
+        }
+        @else {
+          <mat-spinner [diameter]="20"></mat-spinner>
+        }
       </button>
     </form>
     <p class="switch-link">

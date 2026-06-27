@@ -158,7 +158,7 @@ public class XrayService
             throw new IOException("exception");
         }
 
-        xrayRepository.deleteById(id);
+        xrayRepository.delete(xray);
     }
 
 

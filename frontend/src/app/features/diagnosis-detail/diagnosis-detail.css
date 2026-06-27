@@ -1,0 +1,74 @@
+.diagnosis-container {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.diagnosis-container h3 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.diagnosis-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.diagnosis-form input,
+.diagnosis-form textarea {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+.diagnosis-form button {
+  align-self: flex-start;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.diagnosis-form button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.saved {
+  color: #059669;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.diagnosis-view h4 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+}
+.diagnosis-view p {
+  margin: 0 0 12px 0;
+  color: #374151;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.diagnosis-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+.empty {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+.error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}

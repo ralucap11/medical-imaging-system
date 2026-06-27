@@ -54,6 +54,9 @@
       <input type="number" formControlName="weight" />
     </div>
   </div>
+
+  <app-diagnosis-detail [patientId]="data.patientId" [canEdit]="true"></app-diagnosis-detail>
+  
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

@@ -1,12 +1,20 @@
 """
-Medical Imaging AI — Microserviciu 2
+Medical Imaging AI — Microserviciu 2  (v2)
 Model : YOLOv8s ONNX  (detectie vertebre + calcul unghi Cobb)
 Port  : 5002
+
+Imbunatatiri fata de v1:
+  - smooth_centers()              : moving average pe pozitiile X
+  - compute_lateral_deviations()  : deviatie fata de linia de referinta
+  - find_inflection_index()       : detectie curbura dubla (S-curve)
+  - _cobb_for_segment()           : Cobb pe un subset, cu apex + end-vertebre corecte
+  - compute_cobb_angle()          : orchestrator — simplu vs. dublu
+  - draw_visualization()          : apex (portocaliu) + curba secundara (albastru)
 
 Endpoints:
   GET  /health          → status
   POST /predict-cobb    → { cobbAngle, severity, vertebraeCount,
-                             vertebrae, visualization (base64 PNG) }
+                             vertebrae, cobbDetails, visualization (base64 PNG) }
 """
 
 import io
@@ -23,14 +31,14 @@ app = Flask(__name__)
 
 ONNX_PATH   = "vertebrae_detector.onnx"
 INPUT_SIZE  = 640
-CONF_THRESH = 0.25
+CONF_THRESH = 0.10
 IOU_THRESH  = 0.45
 
-# Clasificare unghi Cobb (standard medical Cobb classification)
+
 def cobb_to_severity(angle: float) -> str:
-    if angle < 10:   return "Normal"
-    if angle < 25:   return "Mild"
-    if angle < 40:   return "Moderate"
+    if angle < 10:  return "Normal"
+    if angle < 25:  return "Mild"
+    if angle < 45:  return "Moderate"
     return "Severe"
 
 
@@ -48,31 +56,30 @@ except Exception as e:
     print(f"[ERR] YOLOv8 load failed: {e}")
 
 
+# ─── PREPROCESSING ────────────────────────────────────────────────────────────
+
 def preprocess_image(img: Image.Image):
-
     orig_w, orig_h = img.size
-    scale = min(INPUT_SIZE / orig_w, INPUT_SIZE / orig_h)
-    new_w = int(orig_w * scale)
-    new_h = int(orig_h * scale)
-
+    scale  = min(INPUT_SIZE / orig_w, INPUT_SIZE / orig_h)
+    new_w  = int(orig_w * scale)
+    new_h  = int(orig_h * scale)
     resized = img.resize((new_w, new_h), Image.BILINEAR)
-
 
     canvas = Image.new("RGB", (INPUT_SIZE, INPUT_SIZE), (114, 114, 114))
     pad_x  = (INPUT_SIZE - new_w) // 2
     pad_y  = (INPUT_SIZE - new_h) // 2
     canvas.paste(resized, (pad_x, pad_y))
 
-    arr = np.array(canvas, dtype=np.float32) / 255.0          # [H,W,3]
-    arr = arr.transpose(2, 0, 1)[np.newaxis]                    # [1,3,H,W]
-
+    arr  = np.array(canvas, dtype=np.float32) / 255.0
+    arr  = arr.transpose(2, 0, 1)[np.newaxis]
     meta = {"scale": scale, "pad_x": pad_x, "pad_y": pad_y,
             "orig_w": orig_w, "orig_h": orig_h}
     return arr, meta
 
 
+# ─── NMS + FILTER ─────────────────────────────────────────────────────────────
+
 def nms(boxes_xywh, scores, iou_thresh):
-    """Non-maximum suppression pe boxes [x_c,y_c,w,h]."""
     if len(boxes_xywh) == 0:
         return []
 
@@ -80,18 +87,17 @@ def nms(boxes_xywh, scores, iou_thresh):
     y1 = boxes_xywh[:, 1] - boxes_xywh[:, 3] / 2
     x2 = boxes_xywh[:, 0] + boxes_xywh[:, 2] / 2
     y2 = boxes_xywh[:, 1] + boxes_xywh[:, 3] / 2
-    areas = (x2 - x1) * (y2 - y1)
-
+    areas  = (x2 - x1) * (y2 - y1)
     order  = scores.argsort()[::-1]
     keep   = []
 
     while len(order):
         i = order[0]
         keep.append(i)
-        xx1 = np.maximum(x1[i], x1[order[1:]])
-        yy1 = np.maximum(y1[i], y1[order[1:]])
-        xx2 = np.minimum(x2[i], x2[order[1:]])
-        yy2 = np.minimum(y2[i], y2[order[1:]])
+        xx1   = np.maximum(x1[i], x1[order[1:]])
+        yy1   = np.maximum(y1[i], y1[order[1:]])
+        xx2   = np.minimum(x2[i], x2[order[1:]])
+        yy2   = np.minimum(y2[i], y2[order[1:]])
         inter = np.maximum(0, xx2 - xx1) * np.maximum(0, yy2 - yy1)
         iou   = inter / (areas[i] + areas[order[1:]] - inter + 1e-9)
         order = order[1:][iou <= iou_thresh]
@@ -100,40 +106,36 @@ def nms(boxes_xywh, scores, iou_thresh):
 
 
 def filter_vertebrae(vertebrae: list) -> list:
-    if len(vertebrae) < 3:
-        return [v for v in vertebrae if v["conf"] >= 0.4]
+    if len(vertebrae) == 0:
+        return []
 
     heights = [v["h"] for v in vertebrae]
     widths  = [v["w"] for v in vertebrae]
-    x_positions = [v["x"] for v in vertebrae]
+    avg_h   = sum(heights) / len(heights)
+    avg_w   = sum(widths)  / len(widths)
 
-    avg_h    = sum(heights) / len(heights)
-    avg_w    = sum(widths)  / len(widths)
-    median_x = sorted(x_positions)[len(x_positions) // 2]
+    # elimina dimensiuni aberante
+    vertebrae = [v for v in vertebrae
+                 if v["h"] <= 3 * avg_h and v["w"] <= 3 * avg_w
+                 and v["conf"] >= 0.10]
 
-    filtered = []
-    for v in vertebrae:
-        if v["h"] > 3 * avg_h or v["w"] > 3 * avg_w:
-            continue
-        if v["conf"] < 0.4:
-            continue
+    if len(vertebrae) < 3:
+        return vertebrae
 
-        if abs(v["x"] - median_x) > avg_w * 3:
-            continue
-        filtered.append(v)
+    # IQR pe axa X in loc de median ± avg_w * N
+    x_vals = sorted(v["x"] for v in vertebrae)
+    n      = len(x_vals)
+    q1     = x_vals[n // 4]
+    q3     = x_vals[3 * n // 4]
+    iqr    = max(q3 - q1, avg_w)  # minimum avg_w — spine drepte nu colapseaza fereastra
+    x_lo   = q1 - 1.5 * iqr
+    x_hi   = q3 + 1.5 * iqr
 
-    return filtered
-
+    return [v for v in vertebrae if x_lo <= v["x"] <= x_hi]
 
 def detect_vertebrae(img: Image.Image):
-    """
-    Rulează YOLOv8 + NMS.
-    Returnează lista de boxuri în coordonate originale:
-      [{"x": cx, "y": cy, "w": w, "h": h, "conf": score}, ...]
-    sortate de sus în jos (y crescător).
-    """
     tensor, meta = preprocess_image(img)
-    raw = session.run(None, {"images": tensor})[0][0]  # [5, 8400]
+    raw  = session.run(None, {"images": tensor})[0][0]   # [5, 8400]
 
     xc, yc, w, h, conf = raw[0], raw[1], raw[2], raw[3], raw[4]
     mask = conf >= CONF_THRESH
@@ -145,16 +147,14 @@ def detect_vertebrae(img: Image.Image):
     scores = conf[mask]
     keep   = nms(boxes, scores, IOU_THRESH)
 
-    scale = meta["scale"]
-    pad_x = meta["pad_x"]
-    pad_y = meta["pad_y"]
+    scale, pad_x, pad_y = meta["scale"], meta["pad_x"], meta["pad_y"]
 
     results = []
     for idx in keep:
         cx_orig = (boxes[idx, 0] - pad_x) / scale
         cy_orig = (boxes[idx, 1] - pad_y) / scale
-        w_orig  = boxes[idx, 2] / scale
-        h_orig  = boxes[idx, 3] / scale
+        w_orig  =  boxes[idx, 2] / scale
+        h_orig  =  boxes[idx, 3] / scale
         results.append({
             "x":    round(float(cx_orig), 1),
             "y":    round(float(cy_orig), 1),
@@ -164,73 +164,245 @@ def detect_vertebrae(img: Image.Image):
         })
 
     results.sort(key=lambda b: b["y"])
+
+    print(f"[DEBUG] Raw detections before filter: {len(results)}")
+    for r in results:
+        print(f"  conf={r['conf']:.3f}  x={r['x']}  y={r['y']}")
+
     results = filter_vertebrae(results)
     return results
 
 
-def compute_cobb_angle(vertebrae: list) -> dict:
+# ─── COBB v2: SMOOTHING + END-VERTEBRA DETECTION + S-CURVE ───────────────────
+
+def smooth_centers(vertebrae: list, window: int = 3) -> list:
     """
-    Algoritmul Cobb din centrele bounding box-urilor vertebrelor.
-
-    Pas 1: Calculează panta segmentului dintre fiecare pereche
-            de vertebre consecutive (unghi față de orizontală).
-    Pas 2: Cobb angle = unghiul maxim dintre oricare două segmente
-            inter-vertebrale.
+    Moving average pe coordonatele X ale centrelor vertebrelor.
+    Reduce zgomotul din detecții imperfecte fără a distorsiona
+    forma generală a curburii.
+    Capetele listei sunt păstrate nemodificate (edge artifacts).
     """
-    if len(vertebrae) < 3:
-        return {"angle": None, "topIndex": None, "bottomIndex": None,
-                "error": f"Prea puține vertebre detectate ({len(vertebrae)}). Minim 3."}
+    if len(vertebrae) < window:
+        return vertebrae
 
-    centers = np.array([[v["x"], v["y"]] for v in vertebrae])
-    n = len(centers)
+    centers_x = np.array([v["x"] for v in vertebrae], dtype=float)
+    kernel    = np.ones(window) / window
+    smoothed  = np.convolve(centers_x, kernel, mode="same")
 
+    # Refacem capetele — convolve introduce artefacte la marginile vectorului
+    half             = window // 2
+    smoothed[:half]  = centers_x[:half]
+    smoothed[-half:] = centers_x[-half:]
+
+    result = []
+    for i, v in enumerate(vertebrae):
+        new_v      = v.copy()
+        new_v["x"] = round(float(smoothed[i]), 1)
+        result.append(new_v)
+    return result
+
+
+def compute_lateral_deviations(centers: np.ndarray) -> np.ndarray:
+    """
+    Calculează deviația laterală cu semn a fiecărei vertebre față de
+    linia de referință trasată între prima și ultima vertebră.
+    Semn pozitiv = deviație spre dreapta, negativ = stânga.
+    """
+    p1       = centers[0]
+    p2       = centers[-1]
+    baseline = p2 - p1
+    bl_len   = np.linalg.norm(baseline)
+
+    if bl_len < 1e-6:
+        return np.zeros(len(centers))
+
+    deviations = []
+    for pt in centers:
+        t    = np.dot(pt - p1, baseline) / (bl_len ** 2)
+        proj = p1 + t * baseline
+        deviations.append(float(pt[0] - proj[0]))
+
+    return np.array(deviations)
+
+
+def find_inflection_index(deviations: np.ndarray) -> int:
+    """
+    Găsește indexul unde deviația laterală schimbă semnul
+    (trecere de la curbă stânga la curbă dreapta sau invers) —
+    semnal că există o scolioză în S.
+    Returnează -1 dacă nu există inflexiune.
+    """
+    signs = np.sign(deviations)
+    for i in range(1, len(signs) - 1):
+        prev, nxt = signs[i - 1], signs[i + 1]
+        if prev != 0 and nxt != 0 and prev != nxt:
+            return i
+    return -1
+
+
+def _cobb_for_segment(vertebrae_subset: list) -> dict:
+    """
+    Calculează unghiul Cobb pe un subset de vertebre.
+
+    Metodă:
+      1. Calculează panta fiecărui segment consecutiv (centru-la-centru).
+      2. Identifică apex-ul (vertebra cu deviație laterală maximă).
+      3. Vertebra terminală superioară = segmentul cu tilt maxim DEASUPRA apex-ului.
+      4. Vertebra terminală inferioară = segmentul cu tilt maxim SUB apex.
+      5. Cobb = diferența de unghi dintre cele două segmente terminale.
+    """
+    if len(vertebrae_subset) < 3:
+        return {
+            "angle": None,
+            "topIndex": None, "bottomIndex": None, "apexIndex": None,
+            "segmentAngles": [],
+            "error": f"Segment prea scurt ({len(vertebrae_subset)} vertebre). Minim 3."
+        }
+
+    centers = np.array([[v["x"], v["y"]] for v in vertebrae_subset])
+    n       = len(centers)
+
+    # Unghiurile segmentelor consecutive față de orizontală
     segment_angles = []
     for i in range(n - 1):
-        dx = centers[i+1, 0] - centers[i, 0]
-        dy = centers[i+1, 1] - centers[i, 1]
-        angle_deg = math.degrees(math.atan2(dy, dx))
-        segment_angles.append(angle_deg)
+        dx = centers[i + 1, 0] - centers[i, 0]
+        dy = centers[i + 1, 1] - centers[i, 1]
+        segment_angles.append(math.degrees(math.atan2(dy, dx)))
 
-    # Cobb angle = diferenta maxima dintre oricare doua segmente
-    max_diff    = 0.0
-    top_idx     = 0
-    bottom_idx  = n - 1
+    # Apex = vertebra cu deviație laterală maximă față de baseline-ul subsetului
+    deviations = compute_lateral_deviations(centers)
+    apex_idx   = int(np.argmax(np.abs(deviations)))
+    apex_idx   = max(1, min(apex_idx, n - 2))   # nu la capete
 
-    for i in range(len(segment_angles)):
-        for j in range(i + 1, len(segment_angles)):
-            diff = abs(segment_angles[i] - segment_angles[j])
-            if diff > 180:
-                diff = 360 - diff
-            if diff > max_diff:
-                max_diff   = diff
-                top_idx    = i
-                bottom_idx = j + 1
+    # End vertebra superioară: tilt maxim în segmentele de deasupra apexului
+    top_range = segment_angles[:apex_idx]
+    top_idx   = int(np.argmax(np.abs(top_range))) if top_range else 0
+
+    # End vertebra inferioară: tilt maxim în segmentele de sub apex
+    bot_range = segment_angles[apex_idx:]
+    bot_idx   = apex_idx + int(np.argmax(np.abs(bot_range))) if bot_range else n - 2
+
+    angle_diff = abs(segment_angles[top_idx] - segment_angles[bot_idx])
+    if angle_diff > 180:
+        angle_diff = 360 - angle_diff
 
     return {
-        "angle":       round(max_diff, 1),
-        "topIndex":    top_idx,
-        "bottomIndex": bottom_idx,
-        "segmentAngles": [round(a, 2) for a in segment_angles]
+        "angle":         round(angle_diff, 1),
+        "topIndex":      top_idx,
+        "bottomIndex":   bot_idx + 1,
+        "apexIndex":     apex_idx,
+        "segmentAngles": [round(a, 2) for a in segment_angles],
+        "error":         None
     }
+
+
+def compute_cobb_angle(vertebrae: list) -> dict:
+    """
+    Punct de intrare principal pentru calculul unghiului Cobb.
+
+    Pipeline:
+      1. Smoothing centre (moving average, window=3) — reduce zgomotul detecțiilor.
+      2. Detectare curbă simplă vs. dublă (S-curve) prin schimbare de semn a deviației.
+      3a. Curbă simplă  → _cobb_for_segment() pe toate vertebrele.
+      3b. Curbă dublă   → _cobb_for_segment() pe jumătatea superioară și inferioară;
+                          unghiul principal = max(curve1, curve2).
+    """
+    if len(vertebrae) < 3:
+        return {
+            "angle": None, "topIndex": None, "bottomIndex": None,
+            "apexIndex": None, "isDoubleCurve": False,
+            "primaryCurve": None, "secondaryCurve": None,
+            "segmentAngles": [],
+            "error": f"Prea puține vertebre detectate ({len(vertebrae)}). Minim 3."
+        }
+
+    smoothed   = smooth_centers(vertebrae, window=3)
+    centers    = np.array([[v["x"], v["y"]] for v in smoothed])
+    deviations = compute_lateral_deviations(centers)
+
+    inflection = find_inflection_index(deviations)
+
+    # Curbă dublă validă: inflexiunea trebuie să fie la mijloc,
+    # cu cel puțin 3 vertebre pe fiecare parte
+    is_double = (
+            inflection != -1
+            and inflection >= 3
+            and inflection <= len(vertebrae) - 3
+    )
+
+    if not is_double:
+        # ── Curbă simplă ────────────────────────────────────────────────────
+        result = _cobb_for_segment(smoothed)
+        return {
+            **result,
+            "isDoubleCurve":  False,
+            "primaryCurve":   None,
+            "secondaryCurve": None,
+        }
+
+    # ── Curbă dublă (S-curve) ────────────────────────────────────────────────
+    # Vertebra de inflexiune este inclusa in ambele segmente
+    # (e vertebra terminala inferioara a curburii superioare
+    #  si vertebra terminala superioara a celei inferioare)
+    upper_vertebrae = smoothed[:inflection + 1]
+    lower_vertebrae = smoothed[inflection:]
+
+    curve1 = _cobb_for_segment(upper_vertebrae)
+    curve2 = _cobb_for_segment(lower_vertebrae)
+
+    # Indexurile din _cobb_for_segment sunt relative la subset;
+    # le convertim la indexuri absolute în lista originala
+    def to_absolute(curve_result: dict, offset: int) -> dict:
+        r = curve_result.copy()
+        for key in ("topIndex", "bottomIndex", "apexIndex"):
+            if r.get(key) is not None:
+                r[key] += offset
+        return r
+
+    curve1_abs = to_absolute(curve1, 0)
+    curve2_abs = to_absolute(curve2, inflection)
+
+    # Curba principala = cea mai severa
+    angle1 = curve1.get("angle") or 0.0
+    angle2 = curve2.get("angle") or 0.0
+
+    if angle1 >= angle2:
+        primary, secondary = curve1_abs, curve2_abs
+    else:
+        primary, secondary = curve2_abs, curve1_abs
+
+    return {
+        "angle":          primary["angle"],
+        "topIndex":       primary["topIndex"],
+        "bottomIndex":    primary["bottomIndex"],
+        "apexIndex":      primary["apexIndex"],
+        "segmentAngles":  primary["segmentAngles"],
+        "isDoubleCurve":  True,
+        "primaryCurve":   primary,
+        "secondaryCurve": secondary,
+        "error":          None,
+    }
+
+
 
 
 def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
     """
     Desenează pe imagine:
       - bounding boxes vertebre (galben)
-      - linie coloană vertebrală (verde)
-      - liniile Cobb (roșu) + unghiul
-    Returnează PNG base64.
+      - linie coloana vertebrala (verde)
+      - apex vertebra (portocaliu)
+      - liniile Cobb primare (rosu) + unghi
+      - liniile Cobb secundare (albastru) + unghi  ← nou, doar S-curve
+    Returneaza PNG base64.
     """
-    vis = img.convert("RGB").copy()
+    vis  = img.convert("RGB").copy()
     draw = ImageDraw.Draw(vis)
-
-    # Scala pentru grosimea liniilor (adaptiva la rezolutie)
-    lw = max(2, min(vis.width, vis.height) // 200)
+    lw   = max(2, min(vis.width, vis.height) // 200)
 
     centers = [(v["x"], v["y"]) for v in vertebrae]
 
-    # 1. Bounding boxes
+    # 1. Bounding boxes (galben)
     for v in vertebrae:
         x1 = v["x"] - v["w"] / 2
         y1 = v["y"] - v["h"] / 2
@@ -238,43 +410,74 @@ def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
         y2 = v["y"] + v["h"] / 2
         draw.rectangle([x1, y1, x2, y2], outline="#FFD700", width=lw)
 
-    # 2. Linie coloana (conectează centrele)
+    # 2. Linie coloana + centre (verde)
     if len(centers) >= 2:
         draw.line(centers, fill="#00FF88", width=lw)
         for cx, cy in centers:
             r = lw * 2
             draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill="#00FF88")
 
-    # 3. Liniile Cobb daca unghiul a fost calculat
+    # 3. Apex vertebra (portocaliu) — cerc suplimentar
+    apex_idx = cobb.get("apexIndex")
+    if apex_idx is not None and 0 <= apex_idx < len(centers):
+        cx, cy = centers[apex_idx]
+        r = lw * 4
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r],
+                     outline="#FF8C00", width=lw + 1)
+
+    # Helper: extinde linia dintre doua centre si o deseneaza
+    def draw_cobb_line(idx_a: int, idx_b: int, color: str):
+        if not (0 <= idx_a < len(centers) and 0 <= idx_b < len(centers)):
+            return
+        cx_a, cy_a = centers[idx_a]
+        cx_b, cy_b = centers[idx_b]
+        dx     = cx_b - cx_a
+        dy     = cy_b - cy_a
+        length = math.hypot(dx, dy) or 1
+        ux, uy = dx / length, dy / length
+        ext    = max(vis.width, vis.height) * 0.15
+        draw.line(
+            [(cx_a - ux * ext, cy_a - uy * ext),
+             (cx_a + ux * ext, cy_a + uy * ext)],
+            fill=color, width=lw + 1
+        )
+
+    # 4. Liniile Cobb primare (rosu)
     if cobb.get("angle") is not None and len(centers) >= 2:
-        top_i    = cobb["topIndex"]
-        bot_i    = cobb["bottomIndex"]
-        line_len = max(vis.width, vis.height) * 0.15
+        top_i  = cobb.get("topIndex", 0)
+        bot_i  = cobb.get("bottomIndex", len(centers) - 1)
+        top_i  = max(0, min(top_i,  len(centers) - 1))
+        bot_i  = max(0, min(bot_i,  len(centers) - 1))
 
-        def draw_cobb_line(idx_a, idx_b, color):
-            if idx_a >= len(centers) or idx_b >= len(centers):
-                return
-            cx_a, cy_a = centers[idx_a]
-            cx_b, cy_b = centers[idx_b]
-            dx = cx_b - cx_a
-            dy = cy_b - cy_a
-            length = math.hypot(dx, dy) or 1
-            ux, uy = dx / length, dy / length
-            x1_ext = cx_a - ux * line_len
-            y1_ext = cy_a - uy * line_len
-            x2_ext = cx_a + ux * line_len
-            y2_ext = cy_a + uy * line_len
-            draw.line([(x1_ext, y1_ext), (x2_ext, y2_ext)],
-                      fill=color, width=lw + 1)
+        top_next = top_i + 1 if top_i + 1 < len(centers) else top_i - 1
+        bot_prev = bot_i - 1 if bot_i > 0              else bot_i + 1
 
-        draw_cobb_line(top_i, top_i + 1 if top_i + 1 < len(centers) else top_i - 1, "#FF4444")
-        draw_cobb_line(bot_i - 1 if bot_i > 0 else bot_i + 1, bot_i, "#FF4444")
+        draw_cobb_line(top_i, top_next, "#FF4444")
+        draw_cobb_line(bot_prev, bot_i, "#FF4444")
 
-        # Text unghi
         mid_x = (centers[top_i][0] + centers[bot_i][0]) / 2
         mid_y = (centers[top_i][1] + centers[bot_i][1]) / 2
-        label = f"Cobb: {cobb['angle']}°"
-        draw.text((mid_x + lw * 4, mid_y), label, fill="#FF4444")
+        draw.text((mid_x + lw * 4, mid_y),
+                  f"Cobb: {cobb['angle']}°", fill="#FF4444")
+
+    # 5. Liniile Cobb secundare (albastru) — doar pentru S-curve
+    if cobb.get("isDoubleCurve") and cobb.get("secondaryCurve"):
+        sec   = cobb["secondaryCurve"]
+        s_top = sec.get("topIndex", 0)
+        s_bot = sec.get("bottomIndex", len(centers) - 1)
+        s_top = max(0, min(s_top, len(centers) - 1))
+        s_bot = max(0, min(s_bot, len(centers) - 1))
+
+        st_next = s_top + 1 if s_top + 1 < len(centers) else s_top - 1
+        sb_prev = s_bot - 1 if s_bot > 0               else s_bot + 1
+
+        draw_cobb_line(s_top, st_next, "#4488FF")
+        draw_cobb_line(sb_prev, s_bot, "#4488FF")
+
+        mid_x2 = (centers[s_top][0] + centers[s_bot][0]) / 2
+        mid_y2 = (centers[s_top][1] + centers[s_bot][1]) / 2 + 20
+        draw.text((mid_x2 + lw * 4, mid_y2),
+                  f"Cobb₂: {sec['angle']}°", fill="#4488FF")
 
     # Encode PNG → base64
     buf = io.BytesIO()
@@ -283,14 +486,16 @@ def draw_visualization(img: Image.Image, vertebrae: list, cobb: dict) -> str:
 
 
 
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({
-        "status": "ok" if MODEL_OK else "model_not_loaded",
-        "model":  "YOLOv8s Vertebrae Detector + Cobb Angle Calculator",
+        "status":        "ok" if MODEL_OK else "model_not_loaded",
+        "model":         "YOLOv8s Vertebrae Detector + Cobb Angle Calculator v2",
         "confThreshold": CONF_THRESH,
         "iouThreshold":  IOU_THRESH,
     })
+
 
 @app.route("/predict-cobb", methods=["POST"])
 def predict_cobb():
@@ -307,7 +512,7 @@ def predict_cobb():
         img        = Image.open(io.BytesIO(file_bytes)).convert("RGB")
 
         # 1. Detectie vertebre
-        vertebrae  = detect_vertebrae(img)
+        vertebrae = detect_vertebrae(img)
 
         if len(vertebrae) == 0:
             return jsonify({
@@ -319,11 +524,32 @@ def predict_cobb():
                 "message":        "Nicio vertebră detectată. Verificați calitatea imaginii."
             })
 
-        # 2. Calcul unghi Cobb
+
+        viz_b64 = None
+        if include_viz:
+            viz_b64 = draw_visualization(img, vertebrae, {})
+
+
+        max_conf  = max(v["conf"] for v in vertebrae)
+        high_conf = [v for v in vertebrae if v["conf"] >= 0.25]
+
+        is_reliable = (max_conf >= 0.40 and len(vertebrae) >= 4) \
+                      or len(high_conf) >= 3
+
+        if not is_reliable:
+            return jsonify({
+                "cobbAngle":      None,
+                "severity":       None,
+                "vertebraeCount": len(vertebrae),
+                "vertebrae":      vertebrae,
+                "visualization":  viz_b64,
+                "message":        "Detectii insuficiente cu confidenta ridicata. Rezultat nesigur."
+            })
+
+        # 4. Calcul unghi Cobb (v2)
         cobb = compute_cobb_angle(vertebrae)
 
-        # 3. Vizualizare optionala
-        viz_b64 = None
+        # 5. Vizualizare completa (cu linii Cobb + apex)
         if include_viz:
             viz_b64 = draw_visualization(img, vertebrae, cobb)
 
@@ -338,16 +564,19 @@ def predict_cobb():
             "cobbDetails": {
                 "topVertebra":    cobb.get("topIndex"),
                 "bottomVertebra": cobb.get("bottomIndex"),
+                "apexVertebra":   cobb.get("apexIndex"),
                 "segmentAngles":  cobb.get("segmentAngles", []),
+                "isDoubleCurve":  cobb.get("isDoubleCurve", False),
+                "primaryCurve":   cobb.get("primaryCurve"),
+                "secondaryCurve": cobb.get("secondaryCurve"),
                 "error":          cobb.get("error")
             },
-            "visualization":  viz_b64   # PNG base64, null dacă visualization=false
+            "visualization": viz_b64
         })
 
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=False)

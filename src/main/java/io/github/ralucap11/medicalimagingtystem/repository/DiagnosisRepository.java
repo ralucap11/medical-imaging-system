@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface DiagnosisRepository extends JpaRepository<Diagnosis, Long>
-{
-    Optional<Diagnosis> findByXrayId(Long xrayId);
-    List<Diagnosis> findByXrayPatientId(Long patientId);
+public interface DiagnosisRepository extends JpaRepository<Diagnosis, Long> {
+    Optional<Diagnosis> findByPatientId(Long patientId);
 }

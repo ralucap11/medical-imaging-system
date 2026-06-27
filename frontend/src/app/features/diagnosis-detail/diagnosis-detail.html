@@ -1,0 +1,58 @@
+<div class="diagnosis-container">
+  <h3>Diagnostic</h3>
+
+  @if (isLoading()) {
+  <div class="loading">Se încarcă...</div>
+  }
+
+  @if (!isLoading()) {
+
+  @if (canEdit) {
+
+  <div class="diagnosis-form">
+    <input
+      type="text"
+      [ngModel]="title()"
+      (ngModelChange)="title.set($event)"
+      placeholder="Titlu (opțional)" />
+
+    <textarea
+      [ngModel]="description()"
+      (ngModelChange)="description.set($event)"
+      placeholder="Observații clinice (opțional)..."
+      rows="5"></textarea>
+
+    <button (click)="save()" [disabled]="isSaving()">
+      {{ isSaving() ? 'Se salvează...' : 'Salvează diagnostic' }}
+    </button>
+
+    @if (savedMessage()) {
+    <span class="saved">✓ Salvat</span>
+    }
+  </div>
+  } @else {
+  @if (diagnosis() && (diagnosis()!.title || diagnosis()!.description)) {
+  <div class="diagnosis-view">
+    @if (diagnosis()!.title) {
+    <h4>{{ diagnosis()!.title }}</h4>
+    }
+    @if (diagnosis()!.description) {
+    <p>{{ diagnosis()!.description }}</p>
+    }
+    <div class="diagnosis-meta">
+      <span>Dr. {{ diagnosis()!.doctorFirstName }} {{ diagnosis()!.doctorLastName }}</span>
+      @if (diagnosis()!.date) {
+      <span>{{ diagnosis()!.date | date:'dd.MM.yyyy' }}</span>
+      }
+    </div>
+  </div>
+  } @else {
+  <div class="empty">Nu există încă un diagnostic pentru acest pacient.</div>
+  }
+  }
+
+  @if (errorMessage()) {
+  <div class="error">❌ {{ errorMessage() }}</div>
+  }
+  }
+</div>

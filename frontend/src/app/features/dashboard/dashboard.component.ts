@@ -10,11 +10,13 @@ import {XrayList} from '../xray-list/xray-list';
 import {PatientEditDialog} from '../patient-edit/patient-edit';
 import {MatDialog} from '@angular/material/dialog';
 import { EditDoctor } from '../edit-doctor/edit-doctor';
+import { DiagnosisDetail } from '../diagnosis-detail/diagnosis-detail';
+
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, AsyncPipe, XrayList],
+  imports: [CommonModule, AsyncPipe, XrayList, DiagnosisDetail],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

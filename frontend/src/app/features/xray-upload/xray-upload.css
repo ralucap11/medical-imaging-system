@@ -92,3 +92,17 @@ button:disabled {
   border-radius: 8px;
   font-size: 0.9rem;
 }
+
+.ai-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 8px;
+}
+.ai-note mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}

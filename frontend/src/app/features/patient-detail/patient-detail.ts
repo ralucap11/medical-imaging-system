@@ -5,31 +5,32 @@ import {XrayList} from '../xray-list/xray-list';
 import {XrayUpload} from '../xray-upload/xray-upload';
 import {Component, OnInit, signal, ViewChild} from '@angular/core';
 import {XrayResponse} from '../../core/services/xray.service';
+import { DiagnosisDetail } from '../diagnosis-detail/diagnosis-detail';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [CommonModule, XrayList, XrayUpload],
+  imports: [CommonModule, XrayList, XrayUpload, DiagnosisDetail],
   templateUrl: './patient-detail.html',
   styleUrls: ['./patient-detail.scss']
 })
 export class PatientDetail implements OnInit {
   @ViewChild(XrayList) xrayListRef!: XrayList;
-
-  patient= signal<PatientInfo | null>(null);
+  patient = signal<PatientInfo | null>(null);
   error = signal<string | null>(null);
-
   currentPatientId = signal<number>(0);
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private patientService: PatientService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.currentPatientId.set(Number(this.route.snapshot.paramMap.get('id')));
-    this.getPatientData()
+    this.getPatientData();
   }
 
   getPatientData() {
@@ -43,8 +44,12 @@ export class PatientDetail implements OnInit {
     });
   }
 
+  isDoctor(): boolean {
+    return this.authService.getRole() === 'DOCTOR';
+  }
+
   onUploaded(xray: XrayResponse): void {
-    this.xrayListRef.loadXrays(); // ← apelează direct metoda din XrayList
+    this.xrayListRef.loadXrays();
   }
 
   goBack(): void {

@@ -15,18 +15,18 @@ public class Diagnosis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column
     private LocalDate date;
 
     @OneToOne
-    @JoinColumn(name = "xray_id", unique = true)
-    private Xray xray;
+    @JoinColumn(name = "patient_id", unique = true)
+    private Patient patient;
 
     @ManyToOne
     @JoinColumn(name = "doctor_id")

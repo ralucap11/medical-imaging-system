@@ -35,17 +35,17 @@
     </div>
 
     <div class="info-section">
+      <h3>Radiografii</h3>
       <app-xray-upload [patientId]="patient()!.id!" (uploaded)="onUploaded($event)"></app-xray-upload>
+      <app-xray-list [patientId]="patient()!.id!"></app-xray-list>
     </div>
 
     <div class="info-section">
-      <h3>Radiografii</h3>
-      <app-xray-list [patientId]="patient()!.id!"></app-xray-list>
+      <app-diagnosis-detail [patientId]="patient()!.id!" [canEdit]="isDoctor()"></app-diagnosis-detail>
     </div>
 
     } @else {
     <p style="text-align:center; color:#888;">Se încarcă...</p>
     }
-
   </div>
 </div>
