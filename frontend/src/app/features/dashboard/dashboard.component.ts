@@ -11,6 +11,7 @@ import {PatientEditDialog} from '../patient-edit/patient-edit';
 import {MatDialog} from '@angular/material/dialog';
 import { EditDoctor } from '../edit-doctor/edit-doctor';
 import { DiagnosisDetail } from '../diagnosis-detail/diagnosis-detail';
+import { AddDoctor } from '../add-doctor/add-doctor';
 
 
 @Component({
@@ -123,6 +124,17 @@ export class DashboardComponent implements OnInit {
         });
 
         this.refreshDoctorInfo();
+      });
+  }
+
+  openAddDoctorDialog(): void {
+    this.dialog.open(AddDoctor, { width: '480px' })
+      .afterClosed()
+      .subscribe((created: DoctorInfo) => {
+        if (!created) return;
+        this.doctorService.getAllDoctors().subscribe({
+          next: (doctors) => this.allDoctors.set(doctors)
+        });
       });
   }
 

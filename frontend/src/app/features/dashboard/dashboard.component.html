@@ -186,6 +186,8 @@
 
     <div class="info-section">
       <h3>Doctori</h3>
+      <button class="btn-edit" (click)="openAddDoctorDialog()">+ Adaugă doctor</button>
+
       @if (allDoctors().length > 0) {
       <table class="patients-table">
         <thead>

@@ -56,4 +56,16 @@ export class DoctorService {
   deleteDoctor(id: number): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/doctor/${id}`);
   }
+
+  // nou
+  createDoctor(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    specialty: string;
+    role: string;
+  }): Observable<DoctorInfo> {
+    return this.http.post<DoctorInfo>(`${environment.apiUrl}/doctor`, data);
+  }
 }

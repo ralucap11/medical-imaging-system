@@ -24,7 +24,6 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def build_model():
     model = models.densenet121(weights=None)
-    # DenseNet-121 scoate 1024 features dupa adaptive avg pool intern
     model.classifier = nn.Sequential(
         nn.Linear(1024, 512),
         nn.ReLU(),
@@ -71,7 +70,7 @@ tta_transforms = [
 
 
 def predict_single(image: Image.Image) -> dict:
-    """Run inference on a single PIL image, returns class + probabilities."""
+
     tensor = val_transform(image).unsqueeze(0).to(DEVICE)
     with torch.no_grad():
         output = model(tensor)
